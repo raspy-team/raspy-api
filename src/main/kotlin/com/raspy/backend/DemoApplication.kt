@@ -1,4 +1,4 @@
-package com.cc.demo
+package com.raspy.backend
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
