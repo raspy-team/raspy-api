@@ -18,10 +18,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build and run Spring Boot app
-        run: |
-          ./gradlew bootRun &
-          sleep 60  # 서버 뜰 때까지 기다리기 위함
+      - name: Build Spring Boot jar
+        run: ./gradlew bootJar
+
+      - name: Run Spring Boot app
+        run: java -jar build/libs/*.jar &
 
       - name: Download OpenAPI spec
         run: curl http://localhost:8080/v3/api-docs.yaml -o openapi.yaml
