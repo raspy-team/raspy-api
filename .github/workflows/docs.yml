@@ -1,0 +1,44 @@
+name: Deploy Redoc Docs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build and run Spring Boot app
+        run: |
+          ./gradlew bootRun &
+          sleep 20  # 서버 뜰 때까지 기다리기 위함
+
+      - name: Download OpenAPI spec
+        run: curl http://localhost:8080/v3/api-docs.yaml -o openapi.yaml
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Redoc CLI
+        run: npm install -g redoc-cli
+
+      - name: Generate Redoc HTML
+        run: redoc-cli bundle openapi.yaml -o docs/index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
