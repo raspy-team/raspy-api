@@ -24,6 +24,11 @@ class SecurityConfig(
             .authorizeHttpRequests {
                 it.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll() // H2 콘솔
+
+                    // OpenAPI 스펙을 공개
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    // 헬스체크도 공개
+                    .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .anyRequest().hasAnyRole("USER", "ADMIN")
             }
