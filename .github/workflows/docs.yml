@@ -2,8 +2,7 @@ name: Deploy ReDoc Docs
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy:
@@ -18,22 +17,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Grant execute permission for gradlew
+      - name: Grant execute permission
         run: chmod +x ./gradlew
 
       - name: Build Spring Boot jar
-        run: ./gradlew bootJar
+        run: ./gradlew clean bootJar --no-daemon
 
-      - name: Start server and fetch OpenAPI spec
+      - name: Start server & fetch spec
         run: |
-          # 백그라운드로 서버 실행
           nohup java -jar build/libs/*.jar > server.log 2>&1 &
-          # 서버 부팅 대기 (필요에 따라 늘려도 됩니다)
-          sleep 30
-          # JSON 스펙을 받아오기
-          curl --fail http://localhost:8080/v3/api-docs -o openapi.json
+          # 서버 기동 대기 및 헬스 체크
+          for i in {1..12}; do
+            if curl --silent --fail http://localhost:8080/actuator/health; then
+              echo "Server is up!"; break
+            fi
+            echo "Waiting…"; sleep 5
+          done
+          # spec fetch; 실패 시 로그 덤프
+          curl --fail http://localhost:8080/v3/api-docs -o openapi.json \
+            || { echo "----- SERVER LOG -----"; tail -n 50 server.log; exit 1; }
 
-      - name: Create docs folder
+      - name: Prepare docs folder
         run: rm -rf docs && mkdir docs
 
       - name: Set up Node.js
@@ -45,9 +49,7 @@ jobs:
         run: npm install -g @redocly/cli
 
       - name: Generate ReDoc HTML
-        run: |
-          # JSON을 입력으로 지정
-          npx @redocly/cli build-docs openapi.json -o docs/index.html
+        run: npx @redocly/cli build-docs openapi.json -o docs/index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
