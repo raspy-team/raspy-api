@@ -27,19 +27,16 @@ jobs:
       - name: Run server and fetch OpenAPI spec
         run: |
           java -jar build/libs/*.jar &
-          sleep 30  # 서버가 뜨기를 기다림
+          sleep 30
           curl http://localhost:8080/v3/api-docs.yaml -o openapi.yaml
-      
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      - name: Create docs folder
+        run: mkdir -p docs
 
-      - name: Install Redoc CLI
-        run: npm install -g redoc-cli
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli
 
-      - name: Generate Redoc HTML
+      - name: Generate ReDoc HTML
         run: npx @redocly/cli build-docs openapi.yaml -o docs/index.html
 
 
