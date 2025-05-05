@@ -1,4 +1,4 @@
-package com.raspy.backend.Jwt
+package com.raspy.backend.jwt
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm

@@ -1,13 +1,13 @@
-package com.raspy.backend.Auth
+package com.raspy.backend.auth
 
-import com.raspy.backend.Auth.Request.RegisterRequest
-import com.raspy.backend.Exception.DuplicateEmailException
-import com.raspy.backend.Exception.InvalidCredentialsException
-import com.raspy.backend.Exception.UserNotFoundException
-import com.raspy.backend.Jwt.JwtUtil
-import com.raspy.backend.User.Role
-import com.raspy.backend.User.UserEntity
-import com.raspy.backend.User.UserRepository
+import com.raspy.backend.auth.Request.RegisterRequest
+import com.raspy.backend.exception.DuplicateEmailException
+import com.raspy.backend.exception.InvalidCredentialsException
+import com.raspy.backend.exception.UserNotFoundException
+import com.raspy.backend.jwt.JwtUtil
+import com.raspy.backend.user.Role
+import com.raspy.backend.user.UserEntity
+import com.raspy.backend.user.UserRepository
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 

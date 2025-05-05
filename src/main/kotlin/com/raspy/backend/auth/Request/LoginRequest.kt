@@ -1,4 +1,4 @@
-package com.raspy.backend.Auth.Request
+package com.raspy.backend.auth.Request
 
 import jakarta.validation.constraints.NotBlank
 

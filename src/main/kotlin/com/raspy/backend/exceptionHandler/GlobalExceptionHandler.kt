@@ -1,8 +1,8 @@
-package com.raspy.backend.ExceptionHandler
+package com.raspy.backend.exceptionHandler
 
-import com.raspy.backend.Exception.DuplicateEmailException
-import com.raspy.backend.Exception.InvalidCredentialsException
-import com.raspy.backend.Exception.UserNotFoundException
+import com.raspy.backend.exception.DuplicateEmailException
+import com.raspy.backend.exception.InvalidCredentialsException
+import com.raspy.backend.exception.UserNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException

@@ -1,8 +1,8 @@
-package com.raspy.backend.Auth
+package com.raspy.backend.auth
 
-import com.raspy.backend.Auth.Request.LoginRequest
-import com.raspy.backend.Auth.Request.RegisterRequest
-import com.raspy.backend.Auth.Response.LoginResponse
+import com.raspy.backend.auth.Request.LoginRequest
+import com.raspy.backend.auth.Request.RegisterRequest
+import com.raspy.backend.auth.Response.LoginResponse
 import io.swagger.v3.oas.annotations.Operation
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

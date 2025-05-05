@@ -1,3 +1,3 @@
-package com.raspy.backend.Auth.Response
+package com.raspy.backend.auth.Response
 
 data class LoginResponse (val token: String)

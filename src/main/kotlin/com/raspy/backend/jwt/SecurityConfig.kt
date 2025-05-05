@@ -1,4 +1,4 @@
-package com.raspy.backend.Jwt
+package com.raspy.backend.jwt
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

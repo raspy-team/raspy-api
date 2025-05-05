@@ -1,4 +1,4 @@
-package com.raspy.backend.User
+package com.raspy.backend.user
 
 enum class Role {
     ROLE_USER,

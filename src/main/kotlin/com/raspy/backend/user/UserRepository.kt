@@ -1,4 +1,4 @@
-package com.raspy.backend.User
+package com.raspy.backend.user
 
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.*

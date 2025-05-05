@@ -1,4 +1,4 @@
-package com.raspy.backend.Jwt
+package com.raspy.backend.jwt
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
