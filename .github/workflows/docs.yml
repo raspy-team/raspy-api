@@ -26,16 +26,10 @@ jobs:
       - name: Start server & fetch spec
         run: |
           nohup java -jar build/libs/*.jar > server.log 2>&1 &
-          # 서버 기동 대기 및 헬스 체크
-          for i in {1..12}; do
-            if curl --silent --fail http://localhost:8080/actuator/health; then
-              echo "Server is up!"; break
-            fi
-            echo "Waiting…"; sleep 5
-          done
-          # spec fetch; 실패 시 로그 덤프
+          sleep 30    # 고정 대기
           curl --fail http://localhost:8080/v3/api-docs -o openapi.json \
-            || { echo "----- SERVER LOG -----"; tail -n 50 server.log; exit 1; }
+            || (echo "----- SERVER LOG -----" && tail -n 50 server.log && exit 1)
+
 
       - name: Prepare docs folder
         run: rm -rf docs && mkdir docs
