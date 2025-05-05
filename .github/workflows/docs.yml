@@ -1,4 +1,4 @@
-name: Deploy Redoc Docs
+name: Deploy ReDoc Docs
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Grant execute permission for gradlew
@@ -24,24 +24,33 @@ jobs:
       - name: Build Spring Boot jar
         run: ./gradlew bootJar
 
-      - name: Run server and fetch OpenAPI spec
+      - name: Start server and fetch OpenAPI spec
         run: |
-          java -jar build/libs/*.jar &
+          # 백그라운드로 서버 실행
+          nohup java -jar build/libs/*.jar > server.log 2>&1 &
+          # 서버 부팅 대기 (필요에 따라 늘려도 됩니다)
           sleep 30
-          curl http://localhost:8080/v3/api-docs.yaml -o openapi.yaml
+          # JSON 스펙을 받아오기
+          curl --fail http://localhost:8080/v3/api-docs -o openapi.json
 
       - name: Create docs folder
-        run: mkdir -p docs
+        run: rm -rf docs && mkdir docs
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
       - name: Install Redocly CLI
         run: npm install -g @redocly/cli
 
       - name: Generate ReDoc HTML
-        run: npx @redocly/cli build-docs openapi.yaml -o docs/index.html
-
+        run: |
+          # JSON을 입력으로 지정
+          npx @redocly/cli build-docs openapi.json -o docs/index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          publish_dir: docs
