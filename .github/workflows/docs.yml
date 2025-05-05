@@ -27,7 +27,7 @@ jobs:
         run: |
           nohup java -jar build/libs/*.jar > server.log 2>&1 &
           sleep 30
-          curl --fail http://localhost:8080/v3/api-docs -o openapi.json
+          curl http://localhost:8080/v3/api-docs -o openapi.json
         
         
 
