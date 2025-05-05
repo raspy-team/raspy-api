@@ -26,10 +26,10 @@ jobs:
       - name: Start server & fetch spec
         run: |
           nohup java -jar build/libs/*.jar > server.log 2>&1 &
-          sleep 30    # 고정 대기
-          curl --fail http://localhost:8080/v3/api-docs -o openapi.json \
-            || (echo "----- SERVER LOG -----" && tail -n 50 server.log && exit 1)
-
+          sleep 30
+          curl --fail http://localhost:8080/v3/api-docs -o openapi.json
+        
+        
 
       - name: Prepare docs folder
         run: rm -rf docs && mkdir docs
