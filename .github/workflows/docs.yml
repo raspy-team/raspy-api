@@ -40,7 +40,8 @@ jobs:
         run: npm install -g redoc-cli
 
       - name: Generate Redoc HTML
-        run: redoc-cli bundle openapi.yaml -o docs/index.html
+        run: npx @redocly/cli build-docs openapi.yaml -o docs/index.html
+
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
