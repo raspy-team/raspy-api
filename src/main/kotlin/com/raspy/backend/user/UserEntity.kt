@@ -1,5 +1,7 @@
 package com.raspy.backend.user
 
+import com.raspy.backend.user.enumerated.Role
+import com.raspy.backend.user_profile.UserProfileEntity
 import jakarta.persistence.*
 
 @Entity
@@ -11,7 +13,7 @@ class UserEntity(
     @Column(unique = true, nullable = false, length = 50)
     var email: String,
 
-    @Column(nullable = false, length = 80)  // 보안을 위해 해시된 비밀번호는 길이를 넉넉히 확보 (예: bcrypt는 60자)
+    @Column(nullable = false, length = 80)
     var password: String,
 
     @Column(nullable = false, length = 30)
@@ -20,5 +22,11 @@ class UserEntity(
     @ElementCollection(fetch = FetchType.EAGER, targetClass = Role::class)
     @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
-    var roles: Set<Role> = setOf(Role.ROLE_USER)
+    var roles: Set<Role> = setOf(Role.ROLE_USER),
+
+    /**
+     * Lazy fetch
+     */
+    @OneToOne(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY, optional = false)
+    var profile: UserProfileEntity? = null
 )
