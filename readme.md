@@ -16,12 +16,19 @@
 
 ## 실행환경별 환경설정 분리
 
+### 🔒 민감 정보 관리
+- Docker: `.env` 필요 (compose env로 주입)
+- Local: `application-secret.yml` 필요  
+
+#### → xhae000@gmail.com으로 문의하여 파일 수령
+
+---
 
 ### application.yml
 ```yaml
 spring:
   profiles:
-    active: dev  # dev, prod
+    active: dev,secret  # dev(secret), prod
 ```
 ### 환경설정 유의사항
   
