@@ -1,5 +1,7 @@
 package com.raspy.backend.user
 
+import com.raspy.backend.user.enumerated.Role
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -8,20 +10,42 @@ import org.springframework.security.crypto.password.PasswordEncoder
 @Configuration
 class UserDataInitializer(
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    @Value("\${ADMIN_EMAIL}") private val adminEmail: String,
+    @Value("\${ADMIN_PASSWORD}") private val adminPassword: String
 ) {
 
     @Bean
     fun initData() = CommandLineRunner {
         val email = "test"
 
-        val user = UserEntity(
-            email = email,
-            password = passwordEncoder.encode("test"),
-            nickname = "Test_User"
-        )
+        /**
+         * 테스트 유저 생성
+         */
+        if (!userRepository.existsByEmail(adminEmail)) {
+            val user = UserEntity(
+                email = email,
+                password = passwordEncoder.encode("1234"),
+                nickname = "Test_User"
+            )
 
-        userRepository.save(user)
-        println("[Test user created: $email / test]")
+            userRepository.save(user)
+            println("[Test user created: $email / 1234]")
+        }
+
+
+        /**
+         * 어드민 유저 생성
+         */
+        if (!userRepository.existsByEmail(adminEmail)) {
+            val admin = UserEntity(
+                email = adminEmail,
+                password = passwordEncoder.encode(adminPassword),
+                nickname = "ADMIN",
+                roles = setOf(Role.ROLE_ADMIN)
+            )
+            userRepository.save(admin)
+            println("[Admin user created: $adminEmail / (hidden)]")
+        }
     }
 }
