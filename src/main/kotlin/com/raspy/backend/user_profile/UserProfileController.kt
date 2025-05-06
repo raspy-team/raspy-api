@@ -4,6 +4,7 @@ import com.raspy.backend.jwt.UserPrincipal
 import com.raspy.backend.user_profile.request.UserProfileRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.ModelAttribute
@@ -24,7 +25,7 @@ class UserProfileController(
      */
     @Operation(
         summary = "사용자 프로필 저장",
-        description = "나이, 성별, 지역, 자기소개, 프로필 사진을 저장하거나 수정합니다.",
+        description = "나이, 성별, 지역, 자기소개, 프로필 사진을 저장하거나 수정합니다. *이 request는 multipart/form-data 입니다.",
         responses = [
             ApiResponse(responseCode = "200", description = "성공"),
             ApiResponse(responseCode = "400", description = "잘못된 요청"),
@@ -33,7 +34,7 @@ class UserProfileController(
     )
     @PatchMapping("/save")
     fun saveUserProfile(
-        @ModelAttribute request: UserProfileRequest,  // multipart/form-data의 이미지가 아닌 일반 필드들을 DTO로 매핑
+        @Valid @ModelAttribute request: UserProfileRequest,  // multipart/form-data의 이미지가 아닌 일반 필드들을 DTO로 매핑
         @RequestParam("profile_picture") profilePicture: MultipartFile,
     ): ResponseEntity<String> {
         userProfileService.saveUserProfileInfo(
