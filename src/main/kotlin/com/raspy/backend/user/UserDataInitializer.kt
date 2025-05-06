@@ -11,8 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder
 class UserDataInitializer(
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    @Value("\${ADMIN_EMAIL}") private val adminEmail: String,
-    @Value("\${ADMIN_PASSWORD}") private val adminPassword: String
+    @Value("\${admin.email}") private val adminEmail: String,
+    @Value("\${admin.password}") private val adminPassword: String
 ) {
 
     @Bean

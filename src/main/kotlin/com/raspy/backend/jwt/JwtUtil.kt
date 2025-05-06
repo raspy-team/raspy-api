@@ -10,8 +10,8 @@ import javax.crypto.SecretKey
 
 @Component
 class JwtUtil(
-    @Value("\${JWT_SECRET_KEY}") private val secret: String,
-    @Value("\${JWT_EXPIRATION}") private val expiration: Long
+    @Value("\${jwt.secret}") private val secret: String,
+    @Value("\${jwt.expiration}") private val expiration: Long
 ) {
     private val key: SecretKey = Keys.hmacShaKeyFor(secret.toByteArray())
 
