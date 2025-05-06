@@ -18,6 +18,4 @@ spring:
         enabled: true
         path: /h2-console
 
-jwt:
-    secret: ThisIsASuperStrongAndLongSecretKeyThatHasAtLeast64BytesForHS512AlgorithmUse!!!
-    expiration: 2592000000  # 30일
+m
