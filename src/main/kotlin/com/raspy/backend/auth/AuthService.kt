@@ -5,9 +5,11 @@ import com.raspy.backend.exception.DuplicateEmailException
 import com.raspy.backend.exception.InvalidCredentialsException
 import com.raspy.backend.exception.UserNotFoundException
 import com.raspy.backend.jwt.JwtUtil
-import com.raspy.backend.user.Role
+import com.raspy.backend.jwt.UserPrincipal
+import com.raspy.backend.user.enumerated.Role
 import com.raspy.backend.user.UserEntity
 import com.raspy.backend.user.UserRepository
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 
@@ -42,6 +44,13 @@ class AuthService(
             throw InvalidCredentialsException("Invalid credentials")
         }
         val roles = user.roles.map { it.name }
-        return jwtUtil.generateToken(user.email, roles)
+        return jwtUtil.generateToken(user.id!!, user.email, roles)
+    }
+
+    fun getCurrentUser(): UserPrincipal {
+        val auth = SecurityContextHolder.getContext().authentication
+            ?: throw IllegalStateException("No authentication found")
+        return auth.principal as? UserPrincipal
+            ?: throw IllegalStateException("Invalid principal type")
     }
 }
