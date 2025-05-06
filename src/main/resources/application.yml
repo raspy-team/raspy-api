@@ -4,3 +4,14 @@ spring:
     #  dev(secret) , prod
     #### development environment, production environment ####
     ## 배포 환경에서는 docker compose 통해 프로필 자동변경 (예정)
+
+
+
+## docker compose .env 파일과 application-secret.yml 둘 다 활성화되지 않았을 때에 기본값이 활성화 됨.
+admin:
+  email: ${ADMIN_EMAIL:test@test.test}
+  password: ${ADMIN_PASSWORD:test1234}
+
+jwt:
+  secret: ${JWT_SECRET_KEY:FA5hihaye!!stthSusLriITsngAndLonKeyT!gSt64se12sptHaecreteaersAtStroorHSmUBAlgo}
+  expiration: ${JWT_EXPIRATION:1234567890}
