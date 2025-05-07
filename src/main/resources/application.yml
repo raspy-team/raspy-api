@@ -15,3 +15,13 @@ admin:
 jwt:
   secret: ${JWT_SECRET_KEY:FA5hihaye!!stthSusLriITsngAndLonKeyT!gSt64se12sptHaecreteaersAtStroorHSmUBAlgo}
   expiration: ${JWT_EXPIRATION:1234567890}
+
+cloud:
+  aws:
+    region:
+      static: ${AWS_REGION:empty}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:empty}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:empty}
+    s3:
+      bucket: ${AWS_S3_BUCKET:empty}

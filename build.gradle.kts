@@ -44,10 +44,14 @@ dependencies {
     // OpenAPI with Spring Boot 3.x
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
+    implementation("software.amazon.awssdk:s3:2.25.19")
+
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+
 }
 
 tasks.withType<Test> {
