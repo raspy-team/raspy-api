@@ -11,6 +11,10 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import java.nio.file.Paths
 import java.util.*
+import mu.KotlinLogging
+
+private val log = KotlinLogging.logger {}
+
 @Component
 class S3Uploader(
     @Value("\${cloud.aws.s3.bucket}") private val bucket: String,
@@ -35,20 +39,21 @@ class S3Uploader(
             .bucket(bucket)
             .key(fileName)
             .contentType(file.contentType)
-            //  .acl("public-read")
+            // .acl("public-read")
             .build()
 
         return try {
+            log.info { "Uploading file to S3: $fileName" }
             s3Client.putObject(putObjectRequest, Paths.get(tempFile.toURI()))
-            "https://d1iimlpplvq3em.cloudfront.net/$fileName"
+            val fileUrl = "https://d1iimlpplvq3em.cloudfront.net/$fileName"
+            log.info { "File uploaded successfully: $fileUrl" }
+            fileUrl
         } catch (e: S3Exception) {
+            log.error { "S3 upload failed: ${e.awsErrorDetails().errorMessage()}" }
             throw RuntimeException("S3 업로드 실패 (region 또는 key 값이 옳은지 점검해보세요): ${e.awsErrorDetails().errorMessage()}")
         } finally {
-            /**
-             * s3에 올리면 로컬에 임시 저장한 파일은 지워도 됨
-             */
             tempFile.delete()
+            log.debug { "Temporary file deleted after upload: ${tempFile.name}" }
         }
-
     }
 }

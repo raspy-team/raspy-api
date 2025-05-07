@@ -6,6 +6,9 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.crypto.password.PasswordEncoder
+import mu.KotlinLogging
+
+private val log = KotlinLogging.logger {}
 
 @Configuration
 class UserDataInitializer(
@@ -30,9 +33,8 @@ class UserDataInitializer(
             )
 
             userRepository.save(user)
-            println("[Test user created: $email / 1234]")
+            log.info { "Test user created: $email / 1234" }
         }
-
 
         /**
          * 어드민 유저 생성
@@ -45,7 +47,7 @@ class UserDataInitializer(
                 roles = setOf(Role.ROLE_ADMIN)
             )
             userRepository.save(admin)
-            println("[Admin user created: $adminEmail / (hidden)]")
+            log.info { "Admin user created: $adminEmail / (hidden)" }
         }
     }
 }

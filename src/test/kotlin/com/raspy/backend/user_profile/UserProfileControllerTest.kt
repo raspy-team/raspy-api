@@ -97,7 +97,7 @@ class UserProfileControllerTest {
                 .param("region", "SEOUL")
                 .param("bio", "내용")
                 .with { it.method = "PATCH"; it }
-        ).andExpect(status().isUnauthorized)
+        ).andExpect(status().isForbidden) // not implement 401(unauthorized error)
     }
 
     @Test

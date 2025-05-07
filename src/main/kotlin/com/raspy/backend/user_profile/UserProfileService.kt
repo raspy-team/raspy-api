@@ -6,8 +6,11 @@ import com.raspy.backend.user.UserRepository
 import com.raspy.backend.user_profile.enumerated.Gender
 import com.raspy.backend.user_profile.enumerated.Region
 import jakarta.transaction.Transactional
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
+
+private val log = KotlinLogging.logger {}
 
 @Service
 class UserProfileService (
@@ -15,7 +18,7 @@ class UserProfileService (
     private val userRepository: UserRepository,
     private val userProfileRepository: UserProfileRepository,
     private val s3Uploader: S3Uploader,
-){
+) {
     @Transactional
     fun saveUserProfileInfo(
         age: Int,
@@ -30,6 +33,8 @@ class UserProfileService (
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found") }
 
+        log.info { "Processing user profile update for userId: $userId" }
+
         val profile = userProfileRepository.findByUserId(userId)
             ?: UserProfileEntity(user = user)
 
@@ -38,12 +43,17 @@ class UserProfileService (
         profile.region = region
         profile.bio = bio
 
-        val imageUrl = if (profilePicture!=null && !profilePicture.isEmpty)
+        val imageUrl = if (profilePicture != null && !profilePicture.isEmpty) {
+            log.debug { "Uploading profile picture for userId: $userId" }
             s3Uploader.upload(profilePicture)
-        else "https://d1iimlpplvq3em.cloudfront.net/service/default-profile.png" // 기본 프로필 이미지 url
+        } else {
+            "https://d1iimlpplvq3em.cloudfront.net/service/default-profile.png" // default profile image URL
+        }
 
         profile.profilePicture = imageUrl
 
         userProfileRepository.save(profile)
+
+        log.info { "Profile successfully saved/updated for userId: $userId" }
     }
 }

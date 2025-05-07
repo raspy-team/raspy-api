@@ -12,6 +12,9 @@ import com.raspy.backend.user.UserRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
+import mu.KotlinLogging
+
+private val log = KotlinLogging.logger {}
 
 @Service
 class AuthService(
@@ -20,9 +23,11 @@ class AuthService(
 ) {
     private val passwordEncoder = BCryptPasswordEncoder()
 
+    fun register(req: RegisterRequest) {
+        log.info { "Attempting to register user: ${req.email}" }
 
-    fun register(req: RegisterRequest): Unit {
         if (userRepository.findByEmail(req.email).isPresent) {
+            log.warn { "Registration failed - email already exists: ${req.email}" }
             throw DuplicateEmailException("Email already exists")
         }
 
@@ -34,23 +39,44 @@ class AuthService(
         )
 
         userRepository.save(user)
+        log.info { "User registered successfully: ${req.email}" }
     }
 
     fun login(email: String, password: String): String {
+        log.info { "Login attempt for email: $email" }
+
         val user = userRepository.findByEmail(email)
-            .orElseThrow { UserNotFoundException("User not found") }
+            .orElseThrow {
+                log.warn { "Login failed - user not found: $email" }
+                UserNotFoundException("User not found")
+            }
 
         if (!passwordEncoder.matches(password, user.password)) {
+            log.warn { "Login failed - invalid credentials for email: $email" }
             throw InvalidCredentialsException("Invalid credentials")
         }
+
         val roles = user.roles.map { it.name }
-        return jwtUtil.generateToken(user.id!!, user.email, roles)
+        val token = jwtUtil.generateToken(user.id!!, user.email, roles)
+
+        log.info { "Login successful - JWT issued for email: $email" }
+        return token
     }
 
     fun getCurrentUser(): UserPrincipal {
         val auth = SecurityContextHolder.getContext().authentication
-            ?: throw IllegalStateException("No authentication found")
-        return auth.principal as? UserPrincipal
-            ?: throw IllegalStateException("Invalid principal type")
+            ?: run {
+                log.error { "No authentication found in security context" }
+                throw IllegalStateException("No authentication found")
+            }
+
+        val principal = auth.principal as? UserPrincipal
+            ?: run {
+                log.error { "Invalid principal type in security context" }
+                throw IllegalStateException("Invalid principal type")
+            }
+
+        log.debug { "Authenticated user retrieved: ${principal.email}" }
+        return principal
     }
 }

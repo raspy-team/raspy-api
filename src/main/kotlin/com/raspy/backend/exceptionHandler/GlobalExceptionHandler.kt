@@ -1,6 +1,5 @@
 package com.raspy.backend.exceptionHandler
 
-import com.raspy.backend.auth.AuthController
 import com.raspy.backend.exception.DuplicateEmailException
 import com.raspy.backend.exception.InvalidCredentialsException
 import com.raspy.backend.exception.UserNotFoundException
@@ -18,22 +17,26 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException::class)
     fun handleUserNotFound(ex: UserNotFoundException): ResponseEntity<ApiErrorResponse> {
+        logger.warn("User not found exception: ${ex.message}")
         return buildResponse(HttpStatus.NOT_FOUND, ex.message ?: "User not found")
     }
 
     @ExceptionHandler(InvalidCredentialsException::class)
     fun handleInvalidCredentials(ex: InvalidCredentialsException): ResponseEntity<ApiErrorResponse> {
+        logger.warn("Invalid credentials exception: ${ex.message}")
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.message ?: "Invalid credentials")
     }
 
     @ExceptionHandler(DuplicateEmailException::class)
     fun handleDuplicateEmail(ex: DuplicateEmailException): ResponseEntity<ApiErrorResponse> {
+        logger.warn("Duplicate email exception: ${ex.message}")
         return buildResponse(HttpStatus.CONFLICT, ex.message ?: "This is a duplicate email.")
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationExceptions(ex: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> {
         val errors = ex.bindingResult.fieldErrors.associate { it.field to (it.defaultMessage ?: "Invalid value") }
+        logger.warn("Validation failed: $errors")
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ApiErrorResponse(
                 success = false,
@@ -44,9 +47,6 @@ class GlobalExceptionHandler {
         )
     }
 
-    /**
-     * 기타 에러에 대한 default handler
-     */
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<ApiErrorResponse> {
         logger.error("Unexpected error occurred", ex)
@@ -54,6 +54,7 @@ class GlobalExceptionHandler {
     }
 
     private fun buildResponse(status: HttpStatus, message: String): ResponseEntity<ApiErrorResponse> {
+        logger.debug("Building error response - Status: ${status.value()}, Message: $message")
         return ResponseEntity.status(status).body(
             ApiErrorResponse(
                 success = false,
@@ -65,7 +66,6 @@ class GlobalExceptionHandler {
     }
 }
 
-// 공통 응답 DTO
 data class ApiErrorResponse(
     val success: Boolean,
     val code: Int,

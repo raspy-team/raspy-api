@@ -9,13 +9,15 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import jakarta.validation.Valid
+import mu.KotlinLogging
+
+private val log = KotlinLogging.logger {}
 
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService
 ) {
-
     @Operation(
         summary = "사용자 회원가입",
         description = "이메일, 비밀번호, 닉네임을 받아 신규 사용자를 생성합니다.",
@@ -27,7 +29,11 @@ class AuthController(
     )
     @PostMapping("/register")
     fun register(@Valid @RequestBody req: RegisterRequest): ResponseEntity<String> {
+        log.info { "Received registration request for email: ${req.email}" }
+
         authService.register(req)
+
+        log.info { "User registered successfully: ${req.email}" }
         return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully")
     }
 
@@ -42,7 +48,11 @@ class AuthController(
     )
     @PostMapping("/login")
     fun login(@Valid @RequestBody req: LoginRequest): ResponseEntity<LoginResponse> {
+        log.info { "Received login request for email: ${req.email}" }
+
         val token = authService.login(req.email, req.password)
+
+        log.info { "Login successful for email: ${req.email}" }
         return ResponseEntity.ok(LoginResponse(token))
     }
 }

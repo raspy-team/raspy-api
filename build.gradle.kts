@@ -52,6 +52,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.springframework.security:spring-security-test")
 
+    // kotlin logger
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5") // 최신 버전 확인 필요
 
 
 }

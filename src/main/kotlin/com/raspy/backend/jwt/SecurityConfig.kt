@@ -9,6 +9,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import mu.KotlinLogging
+
+private val log = KotlinLogging.logger {}
 
 @Configuration
 @EnableWebSecurity
@@ -18,6 +21,8 @@ class SecurityConfig(
 ) {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+        log.info { "Configuring security filter chain" }
+
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
@@ -45,7 +50,8 @@ class SecurityConfig(
             .headers { it.frameOptions { it.sameOrigin() } }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
+        log.info { "Security filter chain configured successfully" }
+
         return http.build()
     }
 }
-
