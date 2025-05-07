@@ -40,7 +40,7 @@ class S3Uploader(
 
         return try {
             s3Client.putObject(putObjectRequest, Paths.get(tempFile.toURI()))
-            "https://$bucket.s3.${region}.amazonaws.com/$fileName"
+            "https://d1iimlpplvq3em.cloudfront.net/$fileName"
         } catch (e: S3Exception) {
             throw RuntimeException("S3 업로드 실패 (region 또는 key 값이 옳은지 점검해보세요): ${e.awsErrorDetails().errorMessage()}")
         } finally {

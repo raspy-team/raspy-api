@@ -22,7 +22,7 @@ class UserProfileService (
         gender: Gender,
         region: Region,
         bio: String,
-        profilePicture: MultipartFile
+        profilePicture: MultipartFile?
     ) {
         val userPrincipal = authService.getCurrentUser()
         val userId = userPrincipal.id
@@ -38,13 +38,12 @@ class UserProfileService (
         profile.region = region
         profile.bio = bio
 
-        /**
-         * s3 저장 필요 (현재는 테스트 이미지 url임) profilePicture
-         */
-        val imageUrl = s3Uploader.upload(profilePicture)
+        val imageUrl = if (profilePicture!=null && !profilePicture.isEmpty)
+            s3Uploader.upload(profilePicture)
+        else "https://d1iimlpplvq3em.cloudfront.net/service/default-profile.png" // 기본 프로필 이미지 url
+
         profile.profilePicture = imageUrl
 
         userProfileRepository.save(profile)
     }
-
 }
