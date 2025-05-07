@@ -37,7 +37,14 @@ class S3Uploader(
             .acl("public-read")
             .build()
 
-        s3Client.putObject(putObjectRequest, Paths.get(tempFile.toURI()))
+        try {
+            s3Client.putObject(putObjectRequest, Paths.get(tempFile.toURI()))
+        } finally {
+            /**
+             * s3에 올리면 로컬에 임시 저장한 파일은 지워도 됨
+             */
+            tempFile.delete()
+        }
         return "https://$bucket.s3.${region}.amazonaws.com/$fileName"
     }
 }
