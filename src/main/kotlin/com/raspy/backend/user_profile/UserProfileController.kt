@@ -35,7 +35,7 @@ class UserProfileController(
     @PatchMapping("/save")
     fun saveUserProfile(
         @Valid @ModelAttribute request: UserProfileRequest,  // multipart/form-data의 이미지가 아닌 일반 필드들을 DTO로 매핑
-        @RequestParam("profile_picture") profilePicture: MultipartFile,
+        @RequestParam("profile_picture", required = false) profilePicture: MultipartFile,
     ): ResponseEntity<String> {
         userProfileService.saveUserProfileInfo(
             age = request.age,

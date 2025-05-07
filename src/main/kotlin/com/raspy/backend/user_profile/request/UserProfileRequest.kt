@@ -20,7 +20,6 @@ data class UserProfileRequest(
     @field:NotNull
     val region: Region,
 
-    @field:NotBlank
     @field:Size(max = 500)  // bio는 최대 500자 제한
     val bio: String
 )
