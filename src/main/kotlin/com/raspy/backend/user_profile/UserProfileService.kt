@@ -1,13 +1,11 @@
 package com.raspy.backend.user_profile
 
 import com.raspy.backend.auth.AuthService
-import com.raspy.backend.jwt.UserPrincipal
+import com.raspy.backend.s3.S3Uploader
 import com.raspy.backend.user.UserRepository
-import com.raspy.backend.user.UserService
 import com.raspy.backend.user_profile.enumerated.Gender
 import com.raspy.backend.user_profile.enumerated.Region
 import jakarta.transaction.Transactional
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 
@@ -16,6 +14,7 @@ class UserProfileService (
     private val authService: AuthService,
     private val userRepository: UserRepository,
     private val userProfileRepository: UserProfileRepository,
+    private val s3Uploader: S3Uploader,
 ){
     @Transactional
     fun saveUserProfileInfo(
@@ -42,7 +41,7 @@ class UserProfileService (
         /**
          * s3 저장 필요 (현재는 테스트 이미지 url임) profilePicture
          */
-        val imageUrl = "https://cdn.shopclues.com/images/thumbnails/79835/320/320/104787525124666394ID1006929615021796911502242942.jpg"
+        val imageUrl = s3Uploader.upload(profilePicture)
         profile.profilePicture = imageUrl
 
         userProfileRepository.save(profile)
