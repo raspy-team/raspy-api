@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import software.amazon.awssdk.services.s3.model.S3Exception
 import java.nio.file.Paths
 import java.util.*
 @Component
@@ -34,17 +35,20 @@ class S3Uploader(
             .bucket(bucket)
             .key(fileName)
             .contentType(file.contentType)
-            .acl("public-read")
+            //  .acl("public-read")
             .build()
 
-        try {
+        return try {
             s3Client.putObject(putObjectRequest, Paths.get(tempFile.toURI()))
+            "https://$bucket.s3.${region}.amazonaws.com/$fileName"
+        } catch (e: S3Exception) {
+            throw RuntimeException("S3 업로드 실패 (region 또는 key 값이 옳은지 점검해보세요): ${e.awsErrorDetails().errorMessage()}")
         } finally {
             /**
              * s3에 올리면 로컬에 임시 저장한 파일은 지워도 됨
              */
             tempFile.delete()
         }
-        return "https://$bucket.s3.${region}.amazonaws.com/$fileName"
+
     }
 }
