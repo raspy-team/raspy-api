@@ -44,6 +44,9 @@ class GlobalExceptionHandler {
         )
     }
 
+    /**
+     * 기타 에러에 대한 default handler
+     */
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<ApiErrorResponse> {
         logger.error("Unexpected error occurred", ex)
