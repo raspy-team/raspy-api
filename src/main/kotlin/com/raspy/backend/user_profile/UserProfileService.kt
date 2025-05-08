@@ -13,12 +13,17 @@ import org.springframework.web.multipart.MultipartFile
 private val log = KotlinLogging.logger {}
 
 @Service
-class UserProfileService (
+class UserProfileService(
     private val authService: AuthService,
     private val userRepository: UserRepository,
     private val userProfileRepository: UserProfileRepository,
     private val s3Uploader: S3Uploader,
 ) {
+    companion object {
+        private const val DEFAULT_PROFILE_PIC_URL =
+            "https://d1iimlpplvq3em.cloudfront.net/service/default-profile.png"
+    }
+
     @Transactional
     fun saveUserProfileInfo(
         age: Int,
@@ -27,33 +32,50 @@ class UserProfileService (
         bio: String,
         profilePicture: MultipartFile?
     ) {
+        // 현재 사용자 참조만 얻어오기 (외래키 설정용, 실제 SELECT는 지연)
         val userPrincipal = authService.getCurrentUser()
         val userId = userPrincipal.id
+        val userRef = userRepository.getReferenceById(userId)
 
-        val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found") }
+        log.info { "saveUserProfileInfo 시작: userId=$userId" }
 
-        log.info { "Processing user profile update for userId: $userId" }
-
+        // 기존 프로필 조회 혹은 신규 생성
         val profile = userProfileRepository.findByUserId(userId)
-            ?: UserProfileEntity(user = user)
+            ?.apply {
+                log.debug { "Existing profile found for userId=$userId, updating fields" }
+            }
+            ?: UserProfileEntity(user = userRef).also {
+                log.debug { "No profile found for userId=$userId, creating new UserProfileEntity" }
+            }
 
-        profile.age = age
-        profile.gender = gender
-        profile.region = region
-        profile.bio = bio
-
-        val imageUrl = if (profilePicture != null && !profilePicture.isEmpty) {
-            log.debug { "Uploading profile picture for userId: $userId" }
-            s3Uploader.upload(profilePicture)
-        } else {
-            "https://d1iimlpplvq3em.cloudfront.net/service/default-profile.png" // default profile image URL
+        // 공통 필드 설정
+        profile.apply {
+            this.age = age
+            this.gender = gender
+            this.region = region
+            this.bio = bio
         }
+
+        // 프로필 사진 업로드 혹은 기본 URL 설정
+        val imageUrl = profilePicture
+            ?.takeIf { it!=null && ! it.isEmpty }
+            ?.also { log.debug { "Uploading new profile picture for userId=$userId" } }
+            ?.let {
+                try {
+                    s3Uploader.upload(it)
+                } catch (e: Exception) {
+                    log.error(e) { "프로필 사진 업로드 실패, 기본 이미지로 대체 userId=$userId" }
+                    DEFAULT_PROFILE_PIC_URL
+                }
+            }
+            ?: run {
+                log.debug { "No picture provided or empty—using default image for userId=$userId" }
+                DEFAULT_PROFILE_PIC_URL
+            }
 
         profile.profilePicture = imageUrl
 
         userProfileRepository.save(profile)
-
-        log.info { "Profile successfully saved/updated for userId: $userId" }
+        log.info { "프로필 저장 완료: userId=$userId, profileId=${profile.id}" }
     }
 }
