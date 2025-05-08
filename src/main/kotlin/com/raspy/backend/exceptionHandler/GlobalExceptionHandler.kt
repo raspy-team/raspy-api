@@ -6,6 +6,7 @@ import com.raspy.backend.exception.UserNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -51,6 +52,12 @@ class GlobalExceptionHandler {
     fun handleGeneralException(ex: Exception): ResponseEntity<ApiErrorResponse> {
         logger.error("Unexpected error occurred", ex)
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.message ?: "An unexpected error occurred")
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleParseError(ex: HttpMessageNotReadableException): ResponseEntity<ApiErrorResponse> {
+        val errorMsg = "Malformed JSON request: ${ex.localizedMessage}"
+        return buildResponse(HttpStatus.BAD_REQUEST, errorMsg )
     }
 
     private fun buildResponse(status: HttpStatus, message: String): ResponseEntity<ApiErrorResponse> {
