@@ -31,24 +31,10 @@ class JwtAuthenticationFilter(
             if (jwtUtil.validateToken(token)) {
                 log.debug { "JWT token validated successfully" }
 
-                val userId = jwtUtil.extractUserId(token)
-                log.debug { "Extracted user ID from token: $userId" }
 
-                val userEntity = userRepository.findById(userId)
-                    .orElseThrow {
-                        log.warn { "User not found with ID: $userId" }
-                        IllegalArgumentException("User not found with id $userId")
-                    }
 
-                val userPrincipal = UserPrincipal.fromUser(userEntity)
-                val auth = UsernamePasswordAuthenticationToken(
-                    userPrincipal,
-                    null,
-                    userPrincipal.authorities
-                )
-
-                SecurityContextHolder.getContext().authentication = auth
-                log.debug { "Authentication set for user: ${userEntity.email}" }
+                SecurityContextHolder.getContext().authentication = jwtUtil.getAuthentication(token)
+                log.debug { "Authentication set for user: ${jwtUtil.extractEmail(token)}" }
             } else {
                 log.warn { "Invalid JWT token received" }
             }

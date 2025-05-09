@@ -1,11 +1,14 @@
 package com.raspy.backend.jwt
 
+import com.raspy.backend.user.UserRepository
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import mu.KotlinLogging
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
 import java.util.*
 import javax.crypto.SecretKey
 
@@ -14,7 +17,8 @@ private val log = KotlinLogging.logger {}
 @Component
 class JwtUtil(
     @Value("\${jwt.secret}") private val secret: String,
-    @Value("\${jwt.expiration}") private val expiration: Long
+    @Value("\${jwt.expiration}") private val expiration: Long,
+    private val userRepository: UserRepository
 ) {
     private val key: SecretKey = Keys.hmacShaKeyFor(secret.toByteArray())
 
@@ -32,6 +36,24 @@ class JwtUtil(
             .setExpiration(expiry)
             .signWith(key, SignatureAlgorithm.HS512)
             .compact()
+    }
+
+    fun getAuthentication (token: String): Authentication {
+        val userId = extractUserId(token)
+        log.debug { "Extracted user ID from token: $userId" }
+
+        val userEntity = userRepository.findById(userId)
+            .orElseThrow {
+                log.warn { "User not found with ID: $userId" }
+                IllegalArgumentException("User not found with id $userId")
+            }
+
+        val userPrincipal = UserPrincipal.fromUser(userEntity)
+        return UsernamePasswordAuthenticationToken(
+            userPrincipal,
+            null,
+            userPrincipal.authorities
+        )
     }
 
     fun validateToken(token: String): Boolean {
@@ -54,7 +76,7 @@ class JwtUtil(
             .toLong()
     }
 
-    fun extractUsername(token: String): String {
+    fun extractEmail(token: String): String {
         log.debug { "Extracting username from JWT" }
         return Jwts.parserBuilder().setSigningKey(key).build()
             .parseClaimsJws(token)
