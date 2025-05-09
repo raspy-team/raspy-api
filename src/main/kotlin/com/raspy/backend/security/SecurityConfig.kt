@@ -1,17 +1,15 @@
-package com.raspy.backend.jwt
+package com.raspy.backend.security
 
+import com.raspy.backend.jwt.JwtAuthenticationFilter
+import mu.KotlinLogging
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import mu.KotlinLogging
-
-private val log = KotlinLogging.logger {}
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +17,9 @@ private val log = KotlinLogging.logger {}
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
+
+    private val log = KotlinLogging.logger {}
+
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         log.info { "Configuring security filter chain" }
@@ -43,6 +44,8 @@ class SecurityConfig(
                         "/doc.html"
                     ).permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                    .requestMatchers("/ws/**").permitAll()
+
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .anyRequest().hasAnyRole("USER", "ADMIN")
             }
