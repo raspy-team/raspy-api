@@ -55,6 +55,8 @@ dependencies {
     // kotlin logger
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5") // 최신 버전 확인 필요
 
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
 
 }
 
