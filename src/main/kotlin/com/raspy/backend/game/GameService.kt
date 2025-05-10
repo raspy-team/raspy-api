@@ -1,5 +1,6 @@
 package com.raspy.backend.game
 
+import com.raspy.backend.auth.AuthService
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
 import com.raspy.backend.user.UserRepository
@@ -11,6 +12,7 @@ import java.time.LocalDateTime
 class GameService(
     private val gameRepository: GameRepository,
     private val userRepository: UserRepository,
+    private val authService: AuthService,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -33,7 +35,7 @@ class GameService(
             matchDate         = request.matchDate,
             placeRoad         = request.placeRoad,
             placeDetail       = request.placeDetail,
-            participants      = 2,
+            participants      = setOf(userRepository.findById(authService.getCurrentUser().id).get()),
             createdBy         = userRef,
             createdAt         = LocalDateTime.now()
         )

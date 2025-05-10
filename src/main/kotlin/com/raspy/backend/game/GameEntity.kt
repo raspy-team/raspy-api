@@ -49,8 +49,16 @@ data class GameEntity(
     @Column(nullable = true)
     val placeDetail: String?, // 장소 상세주소 (협의 가능일 경우 null)
 
+    @ManyToMany
+    @JoinTable(
+        name = "game_participants",
+        joinColumns = [JoinColumn(name = "game_id")],
+        inverseJoinColumns = [JoinColumn(name = "user_id")]
+    )
+    val participants: Set<UserEntity> = emptySet(),
+
     @Column(nullable = false)
-    val participants: Int = 2, // 기본값 2명 (참여 인원)
+    val maxPlayers: Int = 2,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
