@@ -26,13 +26,15 @@ class GameService(
         val game = GameEntity(
             title             = request.title,
             description       = request.description,
-            rulesDescription  = request.rulesDescription,
-            majorCategory     = request.majorCategory,
-            minorCategory     = request.minorCategory,
-            pointsToWin       = request.pointsToWin,
-            setsToWin         = request.setsToWin,
-            duration          = request.duration,
-            winBy             = WinCondition.valueOf(request.winBy),
+            rule = RuleEntity(
+                rulesDescription  = request.rulesDescription,
+                majorCategory     = request.majorCategory,
+                minorCategory     = request.minorCategory,
+                pointsToWin       = request.pointsToWin,
+                setsToWin         = request.setsToWin,
+                duration          = request.duration,
+                winBy             = WinCondition.valueOf(request.winBy),
+            ),
             matchDate         = request.matchDate,
             placeRoad         = request.placeRoad,
             placeDetail       = request.placeDetail,
@@ -46,14 +48,14 @@ class GameService(
     }
 
     fun findAllSummaries(): List<GameSummaryResponse> {
-        val games = gameRepository.findAll()  // 단순한 경우 fetch join 불필요
+        val games = gameRepository.findAllAtGameList()  // 단순한 경우 fetch join 불필요
 
         return games.map { game ->
             GameSummaryResponse(
                 id = game.id,
                 title = game.title,
-                majorCategory = game.majorCategory,
-                minorCategory = game.minorCategory,
+                majorCategory = game.rule.majorCategory,
+                minorCategory = game.rule.minorCategory,
                 description = game.description,
                 currentParticipantCounts = game.participants.size,
                 maxPlayers = game.maxPlayers,
