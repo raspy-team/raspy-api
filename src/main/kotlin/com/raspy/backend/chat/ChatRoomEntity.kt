@@ -1,6 +1,7 @@
 package com.raspy.backend.chat
 
 import com.raspy.backend.game.GameEntity
+import com.raspy.backend.game.ParticipationEntity
 import com.raspy.backend.user.UserEntity
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -33,11 +34,11 @@ data class ChatRoomEntity(
         joinColumns = [JoinColumn(name = "chat_room_id")],
         inverseJoinColumns = [JoinColumn(name = "user_id")]
     )
-    val dmParticipants: Set<UserEntity> = emptySet()  // DM only
+    val dmParticipants: Set<ParticipationEntity> = emptySet()  // DM only
 ) {
-    fun getParticipants(): Set<UserEntity> {
+    fun getParticipants(): Set<ParticipationEntity> {
         return when (type) {
-            ChatRoomType.GAME -> game!!.participants
+            ChatRoomType.GAME -> game!!.participations
             ChatRoomType.DM -> dmParticipants
         }
     }

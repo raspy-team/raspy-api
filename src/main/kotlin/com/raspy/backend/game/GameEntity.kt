@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "custom_game")
-data class GameEntity(
+class GameEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
@@ -31,13 +31,8 @@ data class GameEntity(
     @Column(nullable = true)
     val placeDetail: String?,
 
-    @ManyToMany
-    @JoinTable(
-        name = "game_participants",
-        joinColumns = [JoinColumn(name = "game_id")],
-        inverseJoinColumns = [JoinColumn(name = "user_id")]
-    )
-    val participants: Set<UserEntity> = emptySet(),
+    @OneToMany(mappedBy = "game", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val participations: MutableSet<ParticipationEntity> = mutableSetOf(),
 
     @Column(nullable = false)
     val maxPlayers: Int = 2,
@@ -51,4 +46,9 @@ data class GameEntity(
 
     @Column(nullable = false)
     val modifiedAt: LocalDateTime = LocalDateTime.now()
-)
+) {
+    /**
+     * 현재 참가 중인 유저 목록 조회
+     */
+    fun getParticipants(): Set<UserEntity> = participations.map { it.user }.toSet()
+}
