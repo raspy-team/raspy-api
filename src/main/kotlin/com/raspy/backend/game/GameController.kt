@@ -2,6 +2,7 @@ package com.raspy.backend.game
 
 import com.raspy.backend.auth.AuthService
 import com.raspy.backend.game.request.CreateGameRequest
+import com.raspy.backend.game.response.GameSummaryResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.Valid
@@ -30,18 +31,18 @@ class GameController(
         return ResponseEntity.ok("game is created")
     }
 
-//    @Operation(
-//        summary = "게임 리스트 조회",
-//        description = "현재 참여 가능한 모든 게임 방의 요약 정보(제목, 카테고리, 간략 설명 등)를 반환합니다.",
-//        responses = [
-//            ApiResponse(responseCode = "200", description = "게임 리스트 반환 성공")
-//        ]
-//    )
-////    @GetMapping
-////    fun listGames(): ResponseEntity<List<GameSummaryDto>> {
-////        log.info { "전체 게임 리스트 요청" }
-////        val games = gameService.findAllSummaries()
-////        return ResponseEntity.ok(games)
-////    }
+    @Operation(
+        summary = "게임 리스트 조회",
+        description = "현재 참여 가능한 모든 게임 방의 요약 정보(제목, 카테고리, 간략 설명 등)를 반환합니다.",
+        responses = [
+            ApiResponse(responseCode = "200", description = "게임 리스트 반환 성공")
+        ]
+    )
+    @GetMapping
+    fun listGames(): ResponseEntity<List<GameSummaryResponse>> {
+        log.info { "전체 게임 리스트 요청" }
+        val gameSummaryResponses = gameService.findAllSummaries()
+        return ResponseEntity.ok(gameSummaryResponses)
+    }
 
 }
