@@ -16,9 +16,8 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.time.LocalDateTime
 
@@ -43,7 +42,6 @@ class GameControllerTest {
         authorities = listOf(Role.ROLE_USER.toGrantedAuthority())
     )
 
-    // 1️⃣ 성공: 정상 요청
     @Test
     @WithMockUser
     fun `게임 생성 성공 - 정상 요청`() {
@@ -94,7 +92,6 @@ class GameControllerTest {
         )
     }
 
-    // 2️⃣ 실패: title 누락 → 400
     @Test
     @WithMockUser
     fun `게임 생성 실패 - title 누락`() {
@@ -121,7 +118,6 @@ class GameControllerTest {
             .andExpect(status().isBadRequest)
     }
 
-    // 3️⃣ 실패: 인증 없음 → 403
     @Test
     fun `게임 생성 실패 - 인증 없음`() {
         // AuthService는 stub 해두지 않으므로 실제로 인증 필터가 작동해 403
@@ -147,7 +143,6 @@ class GameControllerTest {
             .andExpect(status().isForbidden)
     }
 
-    // 게임 리스트 조회 - 성공
     @Test
     @WithMockUser
     fun `게임 리스트 조회 성공`() {
@@ -186,5 +181,48 @@ class GameControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].title").value("Game 1"))
             .andExpect(jsonPath("$[1].title").value("Game 2"))
+    }
+
+    @Test
+    @WithMockUser
+    fun `게임 참가 성공`() {
+        Mockito.`when`(authService.getCurrentUser()).thenReturn(principal)
+
+        mockMvc.perform(
+            post("/api/games/42/join")
+        )
+            .andExpect(status().isOk)
+
+        verify(gameService).joinGame(42L, principal.id)
+    }
+
+    @Test
+    fun `게임 참가 실패 - 인증 없음`() {
+        mockMvc.perform(
+            post("/api/games/42/join")
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    @WithMockUser
+    fun `게임 나가기 성공`() {
+        Mockito.`when`(authService.getCurrentUser()).thenReturn(principal)
+
+        mockMvc.perform(
+            delete("/api/games/42/leave")
+        )
+            .andExpect(status().isOk)
+
+        verify(gameService).leaveGame(42L, principal.id)
+    }
+
+    // 🔹 게임 나가기 실패—인증 없음 → 403
+    @Test
+    fun `게임 나가기 실패 - 인증 없음`() {
+        mockMvc.perform(
+            delete("/api/games/42/leave")
+        )
+            .andExpect(status().isForbidden)
     }
 }
