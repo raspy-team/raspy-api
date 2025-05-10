@@ -45,4 +45,32 @@ class GameController(
         return ResponseEntity.ok(gameSummaryResponses)
     }
 
+    @Operation(
+        summary     = "게임 참가",
+        description = "현재 로그인한 사용자를 해당 게임에 참가시킵니다."
+    )
+    @PostMapping("/{gameId}/join")
+    fun joinGame(
+        @PathVariable gameId: Long,
+    ): ResponseEntity<Unit> {
+        val principal = authService.getCurrentUser()
+        log.info { "JOIN 요청: user=${principal.id}, game=$gameId" }
+        gameService.joinGame(gameId, principal.id)
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(
+        summary     = "게임 나가기",
+        description = "현재 로그인한 사용자를 해당 게임에서 제외합니다."
+    )
+    @DeleteMapping("/{gameId}/leave")
+    fun leaveGame(
+        @PathVariable gameId: Long,
+    ): ResponseEntity<Unit> {
+        val principal = authService.getCurrentUser()
+        log.info { "LEAVE 요청: user=${principal.id}, game=$gameId" }
+        gameService.leaveGame(gameId, principal.id)
+        return ResponseEntity.ok().build()
+    }
+
 }
