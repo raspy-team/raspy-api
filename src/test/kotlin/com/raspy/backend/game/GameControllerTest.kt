@@ -3,6 +3,7 @@ package com.raspy.backend.game
 import com.raspy.backend.auth.AuthService
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
+import com.raspy.backend.game.response.GameSummaryResponse
 import com.raspy.backend.jwt.UserPrincipal
 import com.raspy.backend.user.enumerated.Role
 import org.junit.jupiter.api.Test
@@ -15,6 +16,8 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.time.LocalDateTime
@@ -142,5 +145,46 @@ class GameControllerTest {
                 .content(json)
         )
             .andExpect(status().isForbidden)
+    }
+
+    // 게임 리스트 조회 - 성공
+    @Test
+    @WithMockUser
+    fun `게임 리스트 조회 성공`() {
+        // 테스트용 게임 목록 반환 설정
+        val gameList = listOf(
+            GameSummaryResponse(
+                id = 1L,
+                title = "Game 1",
+                majorCategory = "Ball",
+                minorCategory = "Soccer",
+                description = "First game description",
+                currentParticipantCounts = 5,
+                maxPlayers = 10,
+                matchDate = null,
+                matchLocation = "경기도 수원시 영통동 일이삼 1"
+            ),
+            GameSummaryResponse(
+                id = 2L,
+                title = "Game 2",
+                majorCategory = "Board",
+                minorCategory = "Chess",
+                description = "Second game description",
+                currentParticipantCounts = 2,
+                maxPlayers = 2,
+                matchDate = null,
+                matchLocation = "부산시 금정구 빵빵동 1"
+            )
+        )
+
+        Mockito.`when`(gameService.findAllSummaries()).thenReturn(gameList)
+
+        mockMvc.perform(
+            get("/api/games")
+                .contentType(MediaType.APPLICATION_JSON)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].title").value("Game 1"))
+            .andExpect(jsonPath("$[1].title").value("Game 2"))
     }
 }
