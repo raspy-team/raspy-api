@@ -23,5 +23,10 @@ data class ChatMessageEntity(
     val message: String,
 
     @Column(nullable = false)
-    val sentAt: LocalDateTime = LocalDateTime.now()
+    val sentAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    val type: MessageType,
+
 )

@@ -12,7 +12,7 @@ class CorsConfig {
         return object : WebMvcConfigurer {
             override fun addCorsMappings(registry: CorsRegistry) {
                 registry.addMapping("/**")
-                    .allowedOrigins("http://localhost:5500", "http://localhost:8000") /////////// frontend 도메인 명시 필요
+                    .allowedOrigins("http://localhost:8000", "http://localhost:8081") /////////// frontend 도메인 명시 필요
                     .allowedMethods("*")
                     .allowedHeaders("*")
                     .allowCredentials(true)

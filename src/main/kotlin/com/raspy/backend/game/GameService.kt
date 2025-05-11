@@ -62,6 +62,22 @@ class GameService(
         log.info { "Game created (id=${saved.id})" }
     }
 
+    fun getGameSummary(id: Long): GameSummaryResponse = gameRepository.findById(id)
+        .orElseThrow{throw RuntimeException("게임 없다!")}
+        .let{game->
+            GameSummaryResponse(
+                id = game.id,
+                title = game.title,
+                majorCategory = game.rule.majorCategory,
+                minorCategory = game.rule.minorCategory,
+                description = game.description,
+                currentParticipantCounts = game.participations.size,
+                maxPlayers = game.maxPlayers,
+                matchDate = game.matchDate,
+                matchLocation = formatMatchLocation(game.placeRoad, game.placeDetail)
+            )
+        }
+
     fun findAllSummaries(): List<GameSummaryResponse> {
         val games = gameRepository.findAllAtGameList()  // 단순한 경우 fetch join 불필요
 

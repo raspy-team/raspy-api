@@ -1,32 +1,31 @@
 package com.raspy.backend.web_socket
 
+import com.raspy.backend.chat.ChatService
 import com.raspy.backend.jwt.JwtUtil
-import mu.KotlinLogging
+import com.raspy.backend.user.UserService
 import org.springframework.context.annotation.Configuration
-import org.springframework.messaging.Message
-import org.springframework.messaging.MessageChannel
+import org.springframework.context.annotation.Lazy
 import org.springframework.messaging.simp.config.ChannelRegistration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
-import org.springframework.messaging.simp.stomp.StompCommand
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor
-import org.springframework.messaging.support.ChannelInterceptor
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
-import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor
-
-import java.util.concurrent.ConcurrentHashMap
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration
 import org.springframework.web.socket.handler.WebSocketHandlerDecorator
 import org.springframework.web.socket.handler.WebSocketHandlerDecoratorFactory
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor
+import java.util.concurrent.ConcurrentHashMap
 
 @Configuration
 @EnableWebSocketMessageBroker
 class WebSocketConfig(
-    private val jwtUtil: JwtUtil
-) : WebSocketMessageBrokerConfigurer {
+    private val jwtUtil: JwtUtil,
+    @Lazy private val chatService: ChatService,
+    private val userService: UserService,
+
+
+    ) : WebSocketMessageBrokerConfigurer {
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
         config.enableSimpleBroker("/topic", "/queue")
@@ -35,12 +34,12 @@ class WebSocketConfig(
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws")
-            .setAllowedOrigins("*")
+            .setAllowedOrigins("http://localhost:8081","http://localhost:8000")
             .addInterceptors(HttpSessionHandshakeInterceptor())
     }
 
     override fun configureClientInboundChannel(registration: ChannelRegistration) {
-        registration.interceptors(JwtChannelInterceptor(jwtUtil))
+        registration.interceptors(JwtChannelInterceptor.JwtChannelInterceptor(jwtUtil, chatService, userService))
     }
 
     override fun configureWebSocketTransport(registration: WebSocketTransportRegistration) {
@@ -69,60 +68,5 @@ class WebSocketConfig(
             }
     }
 
-    private class JwtChannelInterceptor(
-        private val jwtUtil: JwtUtil
-    ) : ChannelInterceptor {
 
-        private val logger = KotlinLogging.logger {}
-
-        companion object {
-            private val activeUsers = ConcurrentHashMap<String, MutableMap<String, String>>() // roomId -> map<username, sessionId>
-        }
-
-        override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
-            val accessor = StompHeaderAccessor.wrap(message)
-
-            logger.info { "Active sessions: ${WebSocketSessionManager.sessionMap.size}" }
-            logger.info { "Active users per room: ${activeUsers.mapValues { it.value.size }}" }
-
-            if (StompCommand.CONNECT == accessor.command) {
-                val token = accessor.getFirstNativeHeader("token")
-                if (token.isNullOrBlank() || !jwtUtil.validateToken(token)) {
-                    logger.warn { "Invalid or missing JWT on CONNECT" }
-                    throw AccessDeniedException("Invalid JWT")
-                }
-                val authentication = jwtUtil.getAuthentication(token)
-                accessor.sessionAttributes?.put("AUTHENTICATED_MEMBER_ID", authentication.name)
-                logger.info { "CONNECT authenticated: ${authentication.name}" }
-                return message
-            }
-
-            val user = accessor.sessionAttributes?.get("AUTHENTICATED_MEMBER_ID")?.toString()
-                ?: throw AccessDeniedException("Missing AUTHENTICATED_MEMBER_ID")
-
-            when (accessor.command) {
-                StompCommand.SUBSCRIBE -> {
-                    val roomId = accessor.destination?.removePrefix("/topic/chat/") ?: return message
-                    val sessionId = accessor.sessionId ?: return message
-                    val userMap = activeUsers.computeIfAbsent(roomId) { ConcurrentHashMap() }
-
-                    val existingSessionId = userMap[user]
-                    if (existingSessionId != null && existingSessionId != sessionId) {
-                        logger.warn { "User $user already connected to $roomId with session $existingSessionId" }
-                        // 기존 강제 세션 종료, 새 세션 대입
-                        WebSocketSessionManager.sessionMap[existingSessionId]?.close()
-                        userMap[user] = sessionId
-                    } else {
-                        userMap[user] = sessionId
-                    }
-                }
-                StompCommand.DISCONNECT -> {
-                    activeUsers.values.forEach { it.remove(user) }
-                    logger.info { "DISCONNECT: removed $user from all rooms" }
-                }
-                else -> {}
-            }
-            return message
-        }
-    }
 }

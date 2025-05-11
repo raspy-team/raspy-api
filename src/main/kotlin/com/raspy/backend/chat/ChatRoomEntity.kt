@@ -2,7 +2,6 @@ package com.raspy.backend.chat
 
 import com.raspy.backend.game.GameEntity
 import com.raspy.backend.game.ParticipationEntity
-import com.raspy.backend.user.UserEntity
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
@@ -36,10 +35,12 @@ data class ChatRoomEntity(
     )
     val dmParticipants: Set<ParticipationEntity> = emptySet()  // DM only
 ) {
+
     fun getParticipants(): Set<ParticipationEntity> {
         return when (type) {
             ChatRoomType.GAME -> game!!.participations
             ChatRoomType.DM -> dmParticipants
         }
     }
+
 }

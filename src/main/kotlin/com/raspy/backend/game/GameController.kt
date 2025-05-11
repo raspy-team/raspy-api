@@ -38,7 +38,7 @@ class GameController(
             ApiResponse(responseCode = "200", description = "게임 리스트 반환 성공")
         ]
     )
-    @GetMapping
+    @GetMapping("/list")
     fun listGames(): ResponseEntity<List<GameSummaryResponse>> {
         log.info { "전체 게임 리스트 요청" }
         val gameSummaryResponses = gameService.findAllSummaries()
@@ -46,18 +46,35 @@ class GameController(
     }
 
     @Operation(
-        summary     = "게임 참가",
-        description = "현재 로그인한 사용자를 해당 게임에 참가시킵니다."
+        summary = "게임 간략 정보 조회",
+        description = "게임 ID를 기반으로 간략한 게임 정보를 반환합니다.",
+        responses = [
+            ApiResponse(responseCode = "200", description = "게임 정보 반환 성공")
+        ]
     )
-    @PostMapping("/{gameId}/join")
-    fun joinGame(
-        @PathVariable gameId: Long,
-    ): ResponseEntity<Unit> {
-        val principal = authService.getCurrentUser()
-        log.info { "JOIN 요청: user=${principal.id}, game=$gameId" }
-        gameService.joinGame(gameId, principal.id)
-        return ResponseEntity.ok().build()
+    @GetMapping("/summary")
+    fun gameInfo(@RequestParam("gameId") gameId: Long): ResponseEntity<GameSummaryResponse> {
+        log.info { "게임 정보 요청" }
+        val gameSummaryResponse = gameService.getGameSummary(gameId)
+        return ResponseEntity.ok(gameSummaryResponse)
     }
+
+//    @Operation(
+//        summary     = "게임 참가",
+//        description = "현재 로그인한 사용자를 해당 게임에 참가시킵니다."
+//    )
+    /**
+     * 신청 으로 바뀌어야함.
+     */
+//    @PostMapping("/{gameId}/join")
+//    fun joinGame(
+//        @PathVariable gameId: Long,
+//    ): ResponseEntity<Unit> {
+//        val principal = authService.getCurrentUser()
+//        log.info { "JOIN 요청: user=${principal.id}, game=$gameId" }
+//        gameService.joinGame(gameId, principal.id)
+//        return ResponseEntity.ok().build()
+//    }
 
     @Operation(
         summary     = "게임 나가기",

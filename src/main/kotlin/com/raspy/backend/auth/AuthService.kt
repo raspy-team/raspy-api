@@ -79,4 +79,19 @@ class AuthService(
         log.debug { "Authenticated user retrieved: ${principal.email}" }
         return principal
     }
+
+    fun getCurrentUserEntity() : UserEntity {
+        val auth = SecurityContextHolder.getContext().authentication
+            ?: run {
+                log.error { "No authentication found in security context" }
+                throw IllegalStateException("No authentication found")
+            }
+
+        val userEntity = userRepository.findByEmail(auth.name).orElseThrow{
+            log.error { "User not found" }
+            throw InvalidCredentialsException("Invalid credentials")
+        }
+
+        return userEntity
+    }
 }

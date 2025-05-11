@@ -6,4 +6,5 @@ import java.util.*
 
 interface ChatRoomRepository: JpaRepository<ChatRoomEntity, UUID> {
     fun findByGame(game: GameEntity): ChatRoomEntity?
+
 }
