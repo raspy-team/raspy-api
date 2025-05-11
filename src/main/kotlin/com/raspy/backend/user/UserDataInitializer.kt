@@ -20,7 +20,7 @@ class UserDataInitializer(
 
     @Bean
     fun initData() = CommandLineRunner {
-        val email = "test"
+        val email = "test@test.test"
 
         /**
          * 테스트 유저 생성
@@ -28,7 +28,7 @@ class UserDataInitializer(
         if (!userRepository.existsByEmail(adminEmail)) {
             val user = UserEntity(
                 email = email,
-                password = passwordEncoder.encode("1234"),
+                password = passwordEncoder.encode("12341234"),
                 nickname = "Test_User"
             )
 
