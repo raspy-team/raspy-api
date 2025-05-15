@@ -34,7 +34,8 @@ class WebSocketConfig(
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws")
-            .setAllowedOrigins("http://localhost:8081","http://localhost:8000")
+           // .setAllowedOrigins("http://localhost:8081","http://localhost:8000")
+            .setAllowedOriginPatterns("*") //test
             .addInterceptors(HttpSessionHandshakeInterceptor())
     }
 

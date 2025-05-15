@@ -3,6 +3,7 @@ package com.raspy.backend.auth
 import com.raspy.backend.auth.Request.LoginRequest
 import com.raspy.backend.auth.Request.RegisterRequest
 import com.raspy.backend.auth.Response.LoginResponse
+import com.raspy.backend.user.UserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.http.HttpStatus
@@ -16,7 +17,7 @@ private val log = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
-    private val authService: AuthService
+    private val authService: AuthService,
 ) {
     @Operation(
         summary = "사용자 회원가입",
@@ -55,4 +56,7 @@ class AuthController(
         log.info { "Login successful for email: ${req.email}" }
         return ResponseEntity.ok(LoginResponse(token))
     }
+
+    @GetMapping("/current-user-id")
+    fun getCurrentUserId() : Long = authService.getCurrentUserEntity().id!!
 }

@@ -52,7 +52,9 @@ class GameWsController(
             ChatMessage(
                 sender = messageEntity.sender.nickname,
                 content = messageEntity.message,
-                timestamp = messageEntity.sentAt
+                timestamp = messageEntity.sentAt,
+                senderId = messageEntity.sender.id!!,
+                messageType = messageEntity.type
             )
         )
     }

@@ -2,6 +2,7 @@ package com.raspy.backend.chat
 
 import com.raspy.backend.game.GameRepository
 import com.raspy.backend.game.GameEntity
+import com.raspy.backend.game.ParticipationEntity
 import com.raspy.backend.user.UserEntity
 import com.raspy.backend.user.UserRepository
 import com.raspy.backend.web_socket.ChatMessage
@@ -33,7 +34,9 @@ class ChatRoomController(
             ChatMessage(
                 sender = it.sender.nickname,
                 content = it.message,
-                timestamp = it.sentAt
+                timestamp = it.sentAt,
+                senderId = it.sender.id!!,
+                messageType = it.type
             )
         }
     }
@@ -55,14 +58,14 @@ class ChatRoomController(
     fun initDefaultGameAndChatRoom() {
         userRepository.save(
             UserEntity(
-                email = "testdla",
-                password = "xptmxmdla",
-                nickname = "testdla",
+                email = "hahaha123@gmail.com",
+                password = "123123123",
+                nickname = "테스트맨",
             )
         )
         if (gameRepository.count() == 0L) {
             val game = GameEntity(
-                title = "Welcome Game",
+                title = "누가누가 햄버거 빨리먹나 게임",
                 description = "자동 생성된 기본 게임",
                 rule = com.raspy.backend.game.RuleEntity(
                     rulesDescription = "기본 룰",
@@ -77,7 +80,7 @@ class ChatRoomController(
                 placeRoad = "서울특별시 강남구",
                 placeDetail = "어디든지",
                 createdBy = userRepository.getReferenceById(1),
-                createdAt = java.time.LocalDateTime.now()
+                createdAt = java.time.LocalDateTime.now(),
             )
             val savedGame = gameRepository.save(game)
             chatRoomRepository.save(

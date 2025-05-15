@@ -1,5 +1,6 @@
 package com.raspy.backend.game
 
+import com.raspy.backend.game.enumerated.ParticipationStatus
 import com.raspy.backend.user.UserEntity
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -18,6 +19,10 @@ class ParticipationEntity(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     val user: UserEntity,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: ParticipationStatus = ParticipationStatus.REQUESTED,
 
     @Column(nullable = false)
     val joinedAt: LocalDateTime = LocalDateTime.now(),
