@@ -12,15 +12,9 @@ class GameEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    @Column(nullable = false, length = 50)
-    var title: String,
-
-    @Column(nullable = false, length = 255)
-    var description: String,
-
     @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "rule_id", referencedColumnName = "id")
-    val rule: RuleEntity,
+    var rule: RuleEntity,
 
     @Column(nullable = true)
     var matchDate: LocalDateTime?,
@@ -39,10 +33,10 @@ class GameEntity(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
-    val createdBy: UserEntity,
+    var createdBy: UserEntity,
 
     @Column(nullable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(nullable = false)
     var modifiedAt: LocalDateTime = LocalDateTime.now()

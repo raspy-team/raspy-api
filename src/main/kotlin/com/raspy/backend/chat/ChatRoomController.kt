@@ -65,16 +65,16 @@ class ChatRoomController(
         )
         if (gameRepository.count() == 0L) {
             val game = GameEntity(
-                title = "누가누가 햄버거 빨리먹나 게임",
-                description = "자동 생성된 기본 게임",
                 rule = com.raspy.backend.game.RuleEntity(
-                    rulesDescription = "기본 룰",
+                    ruleTitle = "에이아이가 만든 타이틀",
                     majorCategory = "축구",
                     minorCategory = "풋살",
                     pointsToWin = 3,
                     setsToWin = 1,
                     duration = 600,
-                    winBy = com.raspy.backend.game.enumerated.WinCondition.SETS_HALF_WIN
+                    winBy = com.raspy.backend.game.enumerated.WinCondition.SETS_HALF_WIN,
+                    ruleDescription = "내가설명햇자나!!",
+                    createdBy = "hahaha123@gmail.com",
                 ),
                 matchDate = null,
                 placeRoad = "서울특별시 강남구",

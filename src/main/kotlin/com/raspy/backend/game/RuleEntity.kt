@@ -11,27 +11,36 @@ data class RuleEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
+    /**
+     * fill with using gpt AI
+     */
+    @Column(nullable = false, length = 200)
+    var ruleTitle: String,
+
     @Column(nullable = false, length = 500)
-    val rulesDescription: String,
+    var ruleDescription: String,
 
     @Column(nullable = false, length = 50)
-    val majorCategory: String,
+    var majorCategory: String,
 
     @Column(nullable = false, length = 50)
-    val minorCategory: String,
+    var minorCategory: String,
 
     @Column(nullable = false)
-    val pointsToWin: Int,
+    var pointsToWin: Int,
 
     @Column(nullable = false)
-    val setsToWin: Int,
+    var setsToWin: Int,
 
     @Column(nullable = false)
-    val duration: Int,
+    var duration: Int,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val winBy: WinCondition,
+    var winBy: WinCondition,
+
+    @Column(nullable = false, length = 200)
+    val createdBy: String,
 
     @Column(nullable = false)
     val useCount: Long = 0  // 룰이 사용된 횟수

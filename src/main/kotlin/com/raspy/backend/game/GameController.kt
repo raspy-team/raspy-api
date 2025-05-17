@@ -2,7 +2,6 @@ package com.raspy.backend.game
 
 import com.raspy.backend.auth.AuthService
 import com.raspy.backend.game.request.CreateGameRequest
-import com.raspy.backend.game.request.UpdateGameRequest
 import com.raspy.backend.game.response.GameSummaryResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -23,7 +22,7 @@ class GameController(
     @Operation(summary = "Create Custom Game", description = "사용자가 커스텀한 스포츠 경기를 생성합니다.")
     fun createGame(@Valid @RequestBody request: CreateGameRequest): ResponseEntity<String> {
         val userPrincipal = authService.getCurrentUser()
-        log.info { "Game 생성 요청: user=${userPrincipal.id}, title=${request.title}" }
+        log.info { "Game 생성 요청: user=${userPrincipal.id}" }
 
         gameService.createGame(request, userPrincipal.id)
         return ResponseEntity.ok("game is created")
@@ -31,7 +30,7 @@ class GameController(
 
     @PutMapping("/{gameId}/update")
     @Operation(summary = "게임 정보 수정", description = "기존에 생성된 게임의 정보를 수정합니다.")
-    fun updateGame(@PathVariable gameId: Long, @Valid @RequestBody request: UpdateGameRequest): ResponseEntity<Unit> {
+    fun updateGame(@PathVariable gameId: Long, @Valid @RequestBody request: CreateGameRequest): ResponseEntity<Unit> {
         val principal = authService.getCurrentUser()
         log.info { "게임 수정 요청: game=$gameId by user=\${principal.id}" }
 
