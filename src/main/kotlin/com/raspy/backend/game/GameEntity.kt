@@ -1,5 +1,6 @@
 package com.raspy.backend.game
 
+import com.raspy.backend.rule.RuleEntity
 import com.raspy.backend.user.UserEntity
 import jakarta.persistence.*
 import java.time.LocalDateTime

@@ -8,6 +8,9 @@ import com.raspy.backend.game.enumerated.ParticipationStatus
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
 import com.raspy.backend.game.response.GameSummaryResponse
+import com.raspy.backend.rule.RuleDto
+import com.raspy.backend.rule.RuleEntity
+import com.raspy.backend.rule.RuleRepository
 import com.raspy.backend.user.UserEntity
 import com.raspy.backend.user.UserRepository
 import com.raspy.backend.user.UserService
@@ -23,7 +26,6 @@ class GameService(
     private val authService: AuthService,
     private val chatRoomRepository: ChatRoomRepository,
     private val participationRepository: ParticipationRepository,
-    private val userService: UserService,
     private val ruleRepository: RuleRepository,
 
     ) {

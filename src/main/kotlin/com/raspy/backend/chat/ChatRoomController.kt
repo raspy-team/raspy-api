@@ -2,7 +2,8 @@ package com.raspy.backend.chat
 
 import com.raspy.backend.game.GameRepository
 import com.raspy.backend.game.GameEntity
-import com.raspy.backend.game.ParticipationEntity
+import com.raspy.backend.game.enumerated.WinCondition
+import com.raspy.backend.rule.RuleEntity
 import com.raspy.backend.user.UserEntity
 import com.raspy.backend.user.UserRepository
 import com.raspy.backend.web_socket.ChatMessage
@@ -65,14 +66,14 @@ class ChatRoomController(
         )
         if (gameRepository.count() == 0L) {
             val game = GameEntity(
-                rule = com.raspy.backend.game.RuleEntity(
+                rule = RuleEntity(
                     ruleTitle = "에이아이가 만든 타이틀",
                     majorCategory = "축구",
                     minorCategory = "풋살",
                     pointsToWin = 3,
                     setsToWin = 1,
                     duration = 600,
-                    winBy = com.raspy.backend.game.enumerated.WinCondition.SETS_HALF_WIN,
+                    winBy = WinCondition.SETS_HALF_WIN,
                     ruleDescription = "내가설명햇자나!!",
                     createdBy = "hahaha123@gmail.com",
                 ),
