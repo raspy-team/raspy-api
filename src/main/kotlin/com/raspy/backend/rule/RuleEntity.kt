@@ -1,4 +1,4 @@
-package com.raspy.backend.game
+package com.raspy.backend.rule
 
 import com.raspy.backend.game.enumerated.WinCondition
 import jakarta.persistence.*

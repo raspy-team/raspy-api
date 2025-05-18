@@ -1,4 +1,4 @@
-package com.raspy.backend.game
+package com.raspy.backend.rule
 
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
