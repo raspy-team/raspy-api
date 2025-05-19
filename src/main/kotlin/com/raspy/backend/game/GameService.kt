@@ -7,10 +7,7 @@ import com.raspy.backend.chat.ChatRoomType
 import com.raspy.backend.game.enumerated.ParticipationStatus
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
-import com.raspy.backend.game.response.ApplicantInfo
-import com.raspy.backend.game.response.GameApplicantsResponse
-import com.raspy.backend.game.response.GameSummaryResponse
-import com.raspy.backend.game.response.RequestedGameResponse
+import com.raspy.backend.game.response.*
 import com.raspy.backend.rule.RuleDto
 import com.raspy.backend.rule.RuleEntity
 import com.raspy.backend.rule.RuleRepository
@@ -351,18 +348,65 @@ class GameService(
         return participation.id
     }
 
-    fun getMyApprovedGames(): List<GameSummaryResponse> {
-        val user: UserEntity = authService.getCurrentUserEntity()
-        val now = LocalDateTime.now()
+//    fun getMyApprovedGames(): List<GameSummaryResponse> {
+//        val user: UserEntity = authService.getCurrentUserEntity()
+//        val now = LocalDateTime.now()
+//
+//        return participationRepository
+//            .findAllByUserAndStatus(user, ParticipationStatus.APPROVED)
+//            .map { it.game }
+//            .filter { game ->
+//                game.matchDate?.isAfter(now) ?: true
+//            }
+//            .map { it.toSummary() }
+//    }
 
-        return participationRepository
-            .findAllByUserAndStatus(user, ParticipationStatus.APPROVED)
+    fun getMyGames(user: UserEntity): List<MyGameResponse> {
+        val participations = participationRepository.findAllByUserAndStatus(user, ParticipationStatus.APPROVED)
+
+        return participations
             .map { it.game }
-            .filter { game ->
-                game.matchDate?.isAfter(now) ?: true
+            .sortedByDescending { it.matchDate }
+            .map { game ->
+                val owner = game.createdBy
+                val opponent = game.participations
+                    .firstOrNull { it.user.id != owner.id }?.user
+
+                MyGameResponse(
+                    id = game.id,
+                    matchLocation = game.placeRoad,
+                    matchDate = game.matchDate,
+
+                    majorCategory = game.rule.majorCategory,
+                    minorCategory = game.rule.minorCategory,
+                    ruleTitle = game.rule.ruleTitle,
+                    ruleDescription = game.rule.ruleDescription,
+
+                    ownerNickname = owner.nickname,
+                    ownerProfileUrl = owner.profile?.profilePicture,
+
+                    opponentId = opponent?.id ?: -1,
+                    opponentNickname = opponent?.nickname ?: "대기 중",
+                    opponentProfileUrl = opponent?.profile?.profilePicture,
+                    opponentWins = 20,
+                    opponentLosses = 4,
+                    opponentDraws = 1,
+                    opponentRating = 75.0,
+
+                    status = getMatchStatus(game.matchDate)
+                )
             }
-            .map { it.toSummary() }
     }
+
+    private fun getMatchStatus(matchDate: LocalDateTime?): String {
+        return when {
+            matchDate == null -> "TBD"
+            matchDate.isAfter(LocalDateTime.now()) -> "UPCOMING"
+            matchDate.isBefore(LocalDateTime.now().minusHours(1)) -> "COMPLETED"
+            else -> "LIVE"
+        }
+    }
+
 
     private fun getGameOrThrow(id: Long): GameEntity =
         gameRepository.findWithRuleAndCreatedByById(id)

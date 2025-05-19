@@ -5,6 +5,7 @@ import com.raspy.backend.game.request.ApproveRequest
 import com.raspy.backend.game.request.CreateGameRequest
 import com.raspy.backend.game.response.GameApplicantsResponse
 import com.raspy.backend.game.response.GameSummaryResponse
+import com.raspy.backend.game.response.MyGameResponse
 import com.raspy.backend.game.response.RequestedGameResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -170,19 +171,25 @@ class GameController(
     }
 
 
-    @Operation(
-        summary = "진행 예정인 게임 목록 조회",
-        description = "승인된 상태이고, 아직 시작 전인 내 게임 목록을 반환합니다."
-    )
-    @GetMapping("/my-approved-games")
-    fun getMyApprovedGames(): ResponseEntity<List<GameSummaryResponse>> {
-        val principal = authService.getCurrentUser()
-        log.info { "진행 예정 게임 요청: user=${principal.id}" }
+//    @Operation(
+//        summary = "진행 예정인 게임 목록 조회",
+//        description = "승인된 상태이고, 아직 시작 전인 내 게임 목록을 반환합니다."
+//    )
+//    @GetMapping("/my-approved-games")
+//    fun getMyApprovedGames(): ResponseEntity<List<GameSummaryResponse>> {
+//        val principal = authService.getCurrentUser()
+//        log.info { "진행 예정 게임 요청: user=${principal.id}" }
+//
+//        val games = gameService.getMyApprovedGames()
+//        return ResponseEntity.ok(games)
+//    }
 
-        val games = gameService.getMyApprovedGames()
-        return ResponseEntity.ok(games)
+
+    @GetMapping("/my-games")
+    @Operation(summary = "내 게임 전체 조회", description = "내가 참가자로 속한 모든 게임 정보를 반환합니다. (진행 예정, 완료 포함)")
+    fun getMyGames(): List<MyGameResponse> {
+        val user = authService.getCurrentUserEntity()
+        return gameService.getMyGames(user)
     }
-
-
 
 }
