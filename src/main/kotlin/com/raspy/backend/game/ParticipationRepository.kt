@@ -13,5 +13,8 @@ interface ParticipationRepository : JpaRepository<ParticipationEntity, Long> {
     fun findByGameAndUser(game: GameEntity, user: UserEntity): ParticipationEntity?
     fun existsByGameAndUser(game: GameEntity, user: UserEntity): Boolean
     fun findAllByUserAndStatus(user: UserEntity, status: ParticipationStatus): List<ParticipationEntity>
-    fun findAllByGameInAndStatus(games: List<GameEntity>, status: ParticipationStatus): List<ParticipationEntity>
-    }
+    fun findAllByGameOrderByIdDesc(game:GameEntity): List<ParticipationEntity>
+    fun countByGameAndStatus(game: GameEntity, status: ParticipationStatus): Long
+    fun findAllByUserOrderByIdDesc(userEntity: UserEntity): List<ParticipationEntity>
+    fun findAllByUser(user: UserEntity): List<ParticipationEntity>
+}

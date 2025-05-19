@@ -7,7 +7,10 @@ import com.raspy.backend.chat.ChatRoomType
 import com.raspy.backend.game.enumerated.ParticipationStatus
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
+import com.raspy.backend.game.response.ApplicantInfo
+import com.raspy.backend.game.response.GameApplicantsResponse
 import com.raspy.backend.game.response.GameSummaryResponse
+import com.raspy.backend.game.response.RequestedGameResponse
 import com.raspy.backend.rule.RuleDto
 import com.raspy.backend.rule.RuleEntity
 import com.raspy.backend.rule.RuleRepository
@@ -181,6 +184,12 @@ class GameService(
             throw IllegalAccessException("해당 게임의 방장만 승인 가능")
         }
 
+        val approvedCount = participationRepository.countByGameAndStatus(participation.game, ParticipationStatus.APPROVED)
+        if (approvedCount >= 1) {
+            // 생성자 1명 + 신청자 1명 → 2인 제한 초과
+            throw IllegalStateException("최대 인원 초과")
+        }
+
         participation.status = ParticipationStatus.APPROVED
         participationRepository.save(participation)
 
@@ -189,6 +198,30 @@ class GameService(
         )
 
         log.info { "참가 승인: user=${participation.user.id}, game=${participation.game.id}" }
+    }
+
+    @Transactional
+    fun cancelApprove(gameId: Long, userId: Long, requester: UserEntity) {
+        val game = gameRepository.findById(gameId)
+            .orElseThrow { NoSuchElementException("게임 없음: $gameId") }
+
+        if (game.createdBy.id != requester.id) {
+            throw IllegalAccessException("해당 게임의 생성자만 참가승인 취소 가능")
+        }
+
+        val user = userRepository.findById(userId)
+            .orElseThrow { NoSuchElementException("유저 없음: $userId") }
+
+        val participation = participationRepository.findByGameAndUser(game, user)
+            ?: throw NoSuchElementException("참여 정보 없음")
+
+        if (participation.status != ParticipationStatus.APPROVED)
+            throw IllegalStateException("이미 승인되지 않은 상태입니다.")
+
+        participation.status = ParticipationStatus.REQUESTED
+        participationRepository.save(participation)
+
+        log.info { "참가 승인 취소: user=$userId, game=$gameId" }
     }
 
     @Transactional
@@ -205,19 +238,107 @@ class GameService(
         log.info { "게임 나가기: user=${user.id}, game=$gameId" }
     }
 
-    fun getMyRequestedGames(): List<GameSummaryResponse> {
-        val user = authService.getCurrentUserEntity()
-        return participationRepository.findAllByUserAndStatus(user, ParticipationStatus.REQUESTED)
-            .map { it.game.toSummary() }
+    fun getRequestedGamesBy(user: UserEntity): List<RequestedGameResponse> {
+        val participations: List<ParticipationEntity> = participationRepository.findAllByUser(user)
+
+        return participations
+            .filter {
+                it.status in listOf(ParticipationStatus.REQUESTED, ParticipationStatus.APPROVED)
+                        && it.game.createdBy.id != user.id // 게임 생성자가 나면 안됨
+            }
+            .map { participation ->
+                val game = participation.game
+                val host = game.createdBy
+
+                RequestedGameResponse(
+                    id = game.id,
+                    title = game.rule.ruleTitle,
+                    description = game.rule.ruleDescription,
+                    majorCategory = game.rule.majorCategory,
+                    minorCategory = game.rule.minorCategory,
+                    matchDate = game.matchDate,
+                    matchLocation = game.placeRoad,
+                    status = participation.status,
+                    ownerNickname = host.nickname,
+                    ownerProfileUrl = host.profile?.profilePicture,
+
+                    //TODO: 통계 적용 시 구현
+                    ownerWins = 20,
+                    ownerLosses = 4,
+                    ownerDraws = 1,
+                    ownerRating = 75.0
+                )
+            }
     }
 
-    fun getApplicantsForMyGames(): List<Pair<Long, String>> {
-        val user = authService.getCurrentUserEntity()
-        val myGames = gameRepository.findAllByCreatedBy(user)
+    @Transactional
+    fun cancelMyRequest(gameId: Long, user: UserEntity) {
+        val game = gameRepository.findById(gameId)
+            .orElseThrow { NoSuchElementException("게임 없음") }
 
-        return participationRepository.findAllByGameInAndStatus(myGames, ParticipationStatus.REQUESTED)
-            .map { it.game.id to it.user.email }
+        val participation = participationRepository.findByGameAndUser(game, user)
+            ?: throw NoSuchElementException("신청 기록 없음")
+
+        if (participation.status != ParticipationStatus.REQUESTED)
+            throw IllegalStateException("이미 승인되었거나 취소된 신청은 취소할 수 없습니다.")
+
+        participationRepository.delete(participation)
+        log.info { "신청 취소: user=${user.id}, game=${game.id}" }
     }
+    //TODO: N+1 해결해야함
+    fun getApplicantsForGamesCreatedBy(owner: UserEntity): List<GameApplicantsResponse> {
+        val games = gameRepository.findAllByCreatedBy(owner)
+
+        return games.mapNotNull { game ->
+            val applicants = participationRepository.findAllByGameOrderByIdDesc(game)
+                .filter{
+                    it.user.id != owner.id
+                }
+            if (applicants.isEmpty()) return@mapNotNull null
+
+            GameApplicantsResponse(
+                gameId = game.id,
+                title = game.rule.ruleTitle,
+                description = game.rule.ruleDescription,
+                majorCategory = game.rule.majorCategory,
+                minorCategory = game.rule.minorCategory,
+                matchDate = game.matchDate,
+                matchLocation = game.placeRoad,
+                applicants = applicants.map {
+                    val user = it.user
+                    ApplicantInfo(
+                        userId = user.id!!,
+                        applicantNickname = user.nickname,
+                        // TODO: 통계 구현 시 작업예정
+                        wins = 20, // user.win,
+                        losses = 3, // user.losses,
+                        draws = 2, // user.draws,
+                        rating = 80.0 , //user.rating,
+                        approved = it.status == ParticipationStatus.APPROVED
+                    )
+                }
+            )
+        }
+    }
+
+    @Transactional
+    fun approveApplicant(gameId: Long, applicantId: Long, approver: UserEntity) {
+        val game = gameRepository.findById(gameId)
+            .orElseThrow { NoSuchElementException("존재하지 않는 게임입니다.") }
+
+        if (game.createdBy.id != approver.id)
+            throw IllegalAccessException("해당 게임의 생성자만 승인할 수 있습니다.")
+
+        val user = userRepository.findById(applicantId)
+            .orElseThrow { NoSuchElementException("존재하지 않는 사용자입니다.") }
+
+        val participation = participationRepository.findByGameAndUser(game, user)
+            ?: throw NoSuchElementException("해당 유저의 신청 내역이 없습니다.")
+
+        participation.status = ParticipationStatus.APPROVED
+        log.info { "게임($gameId)에 대한 신청 승인 완료: applicantId=$applicantId" }
+    }
+
 
     fun findParticipationId(gameId: Long, email: String): Long {
         val game = gameRepository.findById(gameId)

@@ -1,8 +1,11 @@
 package com.raspy.backend.game
 
 import com.raspy.backend.auth.AuthService
+import com.raspy.backend.game.request.ApproveRequest
 import com.raspy.backend.game.request.CreateGameRequest
+import com.raspy.backend.game.response.GameApplicantsResponse
 import com.raspy.backend.game.response.GameSummaryResponse
+import com.raspy.backend.game.response.RequestedGameResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.Valid
@@ -96,6 +99,14 @@ class GameController(
         return ResponseEntity.ok().build()
     }
 
+    @PostMapping("/cancel-approve")
+    @Operation(summary = "참가 승인 취소", description = "참가자의 승인을 취소합니다.")
+    fun cancelApprove(@RequestBody request: ApproveRequest) {
+        val user = authService.getCurrentUserEntity()
+        gameService.cancelApprove(request.gameId, request.userId, user)
+    }
+
+
     @DeleteMapping("/{gameId}/leave")
     @Operation(
         summary = "게임 나가기",
@@ -114,34 +125,37 @@ class GameController(
         description = "현재 로그인한 사용자가 참가 신청한 게임 목록(요약)을 반환합니다."
     )
     @GetMapping("/my-requests")
-    fun getMyRequestedGames(): ResponseEntity<List<GameSummaryResponse>> {
-        val principal = authService.getCurrentUser()
-        log.info { "참가 신청 목록 요청: user=${principal.id}" }
+    fun getMyRequestedGames(): ResponseEntity<List<RequestedGameResponse>> {
+        val user = authService.getCurrentUserEntity()
+        log.info { "참가 신청 목록 요청: user=${user.id}" }
 
-        val games = gameService.getMyRequestedGames()
+        val games = gameService.getRequestedGamesBy(user)
         return ResponseEntity.ok(games)
     }
 
-    data class ApplicantDto(
-        val gameId: Long,
-        val email: String
-    )
+    @PostMapping("/cancel-request")
+    @Operation(summary = "게임 신청 취소", description = "지원자가 게임 신청을 취소합니다.")
+    fun cancelGameRequest(@RequestBody req: CancelGameRequest) {
+        val user = authService.getCurrentUserEntity()
+        gameService.cancelMyRequest(req.gameId, user)
+    }
 
-    @Operation(
-        summary = "내 게임에 신청한 유저 목록 조회",
-        description = "현재 로그인한 사용자가 생성한 게임에 대해 신청된 유저의 정보를 반환합니다."
-    )
+    data class CancelGameRequest(val gameId: Long)
 
     @GetMapping("/my-games/applicants")
-    fun getApplicantsForMyGames(): ResponseEntity<List<ApplicantDto>> {
-        val principal = authService.getCurrentUser()
-        log.info { "내 게임 신청자 목록 요청: host=${principal.id}" }
-
-        val applicants = gameService.getApplicantsForMyGames()
-            .map { (gameId, email) -> ApplicantDto(gameId, email) }
-
-        return ResponseEntity.ok(applicants)
+    @Operation(summary = "내가 생성한 게임에 지원한 유저 목록 조회", description = "로그인한 사용자가 만든 게임에 신청한 유저 정보를 그룹별로 조회합니다.")
+    fun getApplicantsForMyGames(): List<GameApplicantsResponse> {
+        val user = authService.getCurrentUserEntity()
+        return gameService.getApplicantsForGamesCreatedBy(user)
     }
+
+    @PostMapping("/approve")
+    @Operation(summary = "참가 신청 승인", description = "특정 게임에 지원한 사용자의 참가 신청을 승인합니다.")
+    fun approveApplicant(@RequestBody request: ApproveRequest) {
+        val user = authService.getCurrentUserEntity()
+        gameService.approveApplicant(request.gameId, request.userId, user)
+    }
+
     @Operation(
         summary = "참가 신청 ID 조회",
         description = "gameId와 email로 참가 신청 엔티티의 ID를 조회합니다."

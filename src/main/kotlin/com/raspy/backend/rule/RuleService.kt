@@ -9,9 +9,8 @@ class RuleService(
 ) {
     private val log = KotlinLogging.logger {}
 
-    fun getRulesByUser(email: String): List<RuleResponse> =
-        ruleRepository.findAllByCreatedBy(email)
-            .map { it.toResponse() }
+    fun getAllRules(): List<RuleResponse> =
+        ruleRepository.findAll().map { it.toResponse() }
 
     private fun RuleEntity.toResponse(): RuleResponse =
         RuleResponse(

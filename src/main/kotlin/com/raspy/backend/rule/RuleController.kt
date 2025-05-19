@@ -19,9 +19,7 @@ class RuleController(
     @GetMapping("/list")
     @Operation(summary = "사용자 규칙 목록 조회", description = "현재 로그인한 사용자가 만든 규칙 목록을 반환합니다.")
     fun getMyRules(): ResponseEntity<List<RuleResponse>> {
-        val user = authService.getCurrentUser()
-        log.info { "규칙 목록 요청: user=${user.email}" }
-
-        return ResponseEntity.ok(ruleService.getRulesByUser(user.email))
+        log.info { "규칙 목록 요청" }
+        return ResponseEntity.ok(ruleService.getAllRules())
     }
 }
