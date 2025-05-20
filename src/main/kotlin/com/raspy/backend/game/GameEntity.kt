@@ -1,5 +1,6 @@
 package com.raspy.backend.game
 
+import com.raspy.backend.game.enumerated.GameStatus
 import com.raspy.backend.rule.RuleEntity
 import com.raspy.backend.user.UserEntity
 import jakarta.persistence.*
@@ -40,7 +41,10 @@ class GameEntity(
     var createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(nullable = false)
-    var modifiedAt: LocalDateTime = LocalDateTime.now()
+    var modifiedAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(nullable = false)
+    var gameStatus: GameStatus = GameStatus.MATCHING,
 ) {
     /**
      * 현재 참가 중인 유저 목록 조회

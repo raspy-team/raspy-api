@@ -189,7 +189,17 @@ class GameController(
     @Operation(summary = "내 게임 전체 조회", description = "내가 참가자로 속한 모든 게임 정보를 반환합니다. (진행 예정, 완료 포함)")
     fun getMyGames(): List<MyGameResponse> {
         val user = authService.getCurrentUserEntity()
-        return gameService.getMyGames(user)
+        return gameService.getMyIncomingGames(user)
     }
+
+
+    @PostMapping("/{id}/start")
+    @Operation(summary = "Start Game", description = "경기 주최자가 해당 게임을 시작 상태로 변경합니다.")
+    fun startGame(@PathVariable id: Long): ResponseEntity<Unit> {
+        val user = authService.getCurrentUser()
+        gameService.startGame(id, user)
+        return ResponseEntity.ok().build()
+    }
+
 
 }

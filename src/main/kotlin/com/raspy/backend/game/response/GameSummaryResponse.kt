@@ -1,5 +1,6 @@
 package com.raspy.backend.game.response
 
+import com.raspy.backend.game.enumerated.GameStatus
 import java.time.LocalDateTime
 
 data class GameSummaryResponse(
@@ -19,5 +20,6 @@ data class GameSummaryResponse(
     val winCondition: String,
     val points: Int,
     val sets: Int,
-    val duration: Int
+    val duration: Int,
+    val gameStatus: GameStatus
 )

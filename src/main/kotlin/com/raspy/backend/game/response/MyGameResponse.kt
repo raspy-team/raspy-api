@@ -1,5 +1,6 @@
 package com.raspy.backend.game.response
 
+import com.raspy.backend.game.enumerated.GameStatus
 import java.time.LocalDateTime
 
 data class MyGameResponse(
@@ -23,5 +24,5 @@ data class MyGameResponse(
     val opponentDraws: Int,
     val opponentRating: Double,
 
-    val status: String // 예: "UPCOMING", "LIVE", "COMPLETED"
+    val status: GameStatus
 )

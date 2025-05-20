@@ -4,6 +4,7 @@ import com.raspy.backend.auth.AuthService
 import com.raspy.backend.chat.ChatRoomEntity
 import com.raspy.backend.chat.ChatRoomRepository
 import com.raspy.backend.chat.ChatRoomType
+import com.raspy.backend.game.enumerated.GameStatus
 import com.raspy.backend.game.enumerated.ParticipationStatus
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
@@ -88,6 +89,14 @@ class GameService(
     private fun createRuleCategoryWithAI(description: String): Array<String> = arrayOf("메이저", "마이너")
 
     @Transactional
+    fun startGame(id: Long, user: UserEntity) {
+        val game = gameRepository.findById(id).orElseThrow { throw NoSuchElementException("게임이 존재하지 않음") }
+        if (game.createdBy.id != user.id) throw IllegalAccessException("주최자만 경기를 시작할 수 있습니다.")
+        game.gameStatus = GameStatus.IN_PROGRESS
+        log.info { "Game 시작됨: id=$id" }
+    }
+
+    @Transactional
     fun updateGame(gameId: Long, request: CreateGameRequest, userId: Long) {
         val game = gameRepository.findById(gameId)
             .orElseThrow { NoSuchElementException("게임을 찾을 수 없습니다: $gameId") }
@@ -137,7 +146,7 @@ class GameService(
             throw IllegalAccessException("본인이 생성한 게임만 삭제할 수 있습니다.")
         }
 
-        gameRepository.delete(game)
+        gameRepository.updateGameStatusById(gameId, GameStatus.DELETED)
         log.info { "게임 삭제 완료: $gameId by user=$userId" }
     }
 
@@ -152,6 +161,9 @@ class GameService(
     fun applyToJoinGame(gameId: Long) {
         val user = authService.getCurrentUserEntity()
         val game = getGameOrThrow(gameId)
+
+        if(game.gameStatus != GameStatus.MATCHING)
+            throw Exception("지원이 마감된 게임입니다.")
 
         if (game.createdBy.id == user.id)
             throw Exception("자신이 생성한 게임에는 신청할 수 없습니다.")
@@ -177,9 +189,11 @@ class GameService(
         val participation = participationRepository.findById(participationId)
             .orElseThrow { NoSuchElementException("참가 정보 없음: $participationId") }
 
-        if (participation.game.createdBy.id != host.id) {
+        if (participation.game.createdBy.id != host.id)
             throw IllegalAccessException("해당 게임의 방장만 승인 가능")
-        }
+
+        if(participation.game.gameStatus != GameStatus.MATCHING)
+            throw IllegalAccessException("지원이 마감된 게임")
 
         val approvedCount = participationRepository.countByGameAndStatus(participation.game, ParticipationStatus.APPROVED)
         if (approvedCount >= 1) {
@@ -188,6 +202,10 @@ class GameService(
         }
 
         participation.status = ParticipationStatus.APPROVED
+        // TODO: 상태변하는지 테스트
+        participation.game.gameStatus = GameStatus.SCHEDULED
+
+        participation.game.participations.add(participation)
         participationRepository.save(participation)
 
         chatRoomRepository.findByGame(participation.game) ?: chatRoomRepository.save(
@@ -216,6 +234,8 @@ class GameService(
             throw IllegalStateException("이미 승인되지 않은 상태입니다.")
 
         participation.status = ParticipationStatus.REQUESTED
+        participation.game.gameStatus = GameStatus.MATCHING
+
         participationRepository.save(participation)
 
         log.info { "참가 승인 취소: user=$userId, game=$gameId" }
@@ -229,8 +249,16 @@ class GameService(
         val participation = participationRepository.findByGameAndUser(game, user)
             ?: throw IllegalStateException("참여 이력 없음")
 
+        /**
+         * 게임에 소속 되어있고, 진행 예정일 경우에만 이탈 가능
+         */
+        if(game.gameStatus != GameStatus.SCHEDULED) {
+            throw IllegalAccessException("이탈 불가")
+        }
+
         participation.leftAt = LocalDateTime.now()
         game.participations.removeIf { it.id == participation.id }
+        game.gameStatus = GameStatus.MATCHING
 
         log.info { "게임 나가기: user=${user.id}, game=$gameId" }
     }
@@ -258,6 +286,7 @@ class GameService(
                     status = participation.status,
                     ownerNickname = host.nickname,
                     ownerProfileUrl = host.profile?.profilePicture,
+                    gameStatus =  game.gameStatus,
 
                     //TODO: 통계 적용 시 구현
                     ownerWins = 20,
@@ -313,7 +342,8 @@ class GameService(
                         rating = 80.0 , //user.rating,
                         approved = it.status == ParticipationStatus.APPROVED
                     )
-                }
+                },
+                gameStatus = game.gameStatus
             )
         }
     }
@@ -332,7 +362,11 @@ class GameService(
         val participation = participationRepository.findByGameAndUser(game, user)
             ?: throw NoSuchElementException("해당 유저의 신청 내역이 없습니다.")
 
+        if(game.gameStatus != GameStatus.MATCHING)
+            throw IllegalAccessException("지원이 마감된 게임입니다.")
+
         participation.status = ParticipationStatus.APPROVED
+        game.gameStatus = GameStatus.SCHEDULED
         log.info { "게임($gameId)에 대한 신청 승인 완료: applicantId=$applicantId" }
     }
 
@@ -361,11 +395,17 @@ class GameService(
 //            .map { it.toSummary() }
 //    }
 
-    fun getMyGames(user: UserEntity): List<MyGameResponse> {
+    fun getMyIncomingGames(user: UserEntity): List<MyGameResponse> {
         val participations = participationRepository.findAllByUserAndStatus(user, ParticipationStatus.APPROVED)
 
         return participations
             .map { it.game }
+            /**
+             * 진행 예정인 게임만 보여준다
+             */
+            .filter{
+                it.gameStatus == GameStatus.SCHEDULED
+            }
             .sortedByDescending { it.matchDate }
             .map { game ->
                 val owner = game.createdBy
@@ -393,18 +433,9 @@ class GameService(
                     opponentDraws = 1,
                     opponentRating = 75.0,
 
-                    status = getMatchStatus(game.matchDate)
+                    status = game.gameStatus
                 )
             }
-    }
-
-    private fun getMatchStatus(matchDate: LocalDateTime?): String {
-        return when {
-            matchDate == null -> "TBD"
-            matchDate.isAfter(LocalDateTime.now()) -> "UPCOMING"
-            matchDate.isBefore(LocalDateTime.now().minusHours(1)) -> "COMPLETED"
-            else -> "LIVE"
-        }
     }
 
 
@@ -431,7 +462,8 @@ class GameService(
             winCondition = this.rule.winBy.toString(),
             points = this.rule.pointsToWin,
             sets = this.rule.setsToWin,
-            duration = this.rule.duration
+            duration = this.rule.duration,
+            gameStatus = this.gameStatus
         )
 
     private fun formatMatchLocation(road: String?, detail: String?): String? =
