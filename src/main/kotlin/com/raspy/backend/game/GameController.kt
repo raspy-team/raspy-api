@@ -3,10 +3,7 @@ package com.raspy.backend.game
 import com.raspy.backend.auth.AuthService
 import com.raspy.backend.game.request.ApproveRequest
 import com.raspy.backend.game.request.CreateGameRequest
-import com.raspy.backend.game.response.GameApplicantsResponse
-import com.raspy.backend.game.response.GameSummaryResponse
-import com.raspy.backend.game.response.MyGameResponse
-import com.raspy.backend.game.response.RequestedGameResponse
+import com.raspy.backend.game.response.*
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.Valid
@@ -201,5 +198,11 @@ class GameController(
         return ResponseEntity.ok().build()
     }
 
-
+    @GetMapping("/in-progress")
+    @Operation(summary = "Get In-Progress Game", description = "현재 로그인 유저의 진행 중 게임 정보를 반환합니다.")
+    fun getInProgressGame(): ResponseEntity<InProgressGameResponse?> {
+        val user = authService.getCurrentUserEntity()
+        val result = gameService.getInProgressGame(user)
+        return ResponseEntity.ok(result)
+    }
 }

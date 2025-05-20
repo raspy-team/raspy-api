@@ -155,7 +155,7 @@ class GameService(
         getGameOrThrow(id).toSummary()
 
     fun findAllSummaries(): List<GameSummaryResponse> =
-        gameRepository.findAllAtGameList().map { it.toSummary() }
+        gameRepository.findAllByGameStatus(GameStatus.MATCHING).map { it.toSummary() }
 
     @Transactional
     fun applyToJoinGame(gameId: Long) {
@@ -401,10 +401,11 @@ class GameService(
         return participations
             .map { it.game }
             /**
-             * 진행 예정인 게임만 보여준다
+             * 진행 예정인 게임, 진행 중인 게임 필터링
              */
             .filter{
-                it.gameStatus == GameStatus.SCHEDULED
+                    it.gameStatus == GameStatus.SCHEDULED
+                 || it.gameStatus == GameStatus.IN_PROGRESS
             }
             .sortedByDescending { it.matchDate }
             .map { game ->
@@ -422,8 +423,10 @@ class GameService(
                     ruleTitle = game.rule.ruleTitle,
                     ruleDescription = game.rule.ruleDescription,
 
-                    ownerNickname = owner.nickname,
-                    ownerProfileUrl = owner.profile?.profilePicture,
+                    isOwner = owner.id == user.id,
+
+                    myNickname = owner.nickname,
+                    myProfileUrl = owner.profile?.profilePicture,
 
                     opponentId = opponent?.id ?: -1,
                     opponentNickname = opponent?.nickname ?: "대기 중",
@@ -468,4 +471,21 @@ class GameService(
 
     private fun formatMatchLocation(road: String?, detail: String?): String? =
         listOfNotNull(road, detail).take(2).joinToString(" ")
+
+    fun getInProgressGame(user: UserEntity): InProgressGameResponse? {
+        val participation = participationRepository
+            .findCurrentLiveGame(user) ?: return null
+
+        val game = participation.game
+        val opponent: ParticipationEntity = game.participations.first()
+
+        return InProgressGameResponse(
+            id = game.id,
+            myNickname = user.nickname,
+            myProfileUrl = user.profile?.profilePicture,
+            opponentNickname = opponent.user.nickname,
+            opponentProfileUrl = opponent.user.profile?.profilePicture,
+            endsAt = game.matchDate?.plusMinutes((game.rule.duration/60).toLong())
+        )
+    }
 }

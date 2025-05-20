@@ -15,6 +15,8 @@ interface GameRepository : JpaRepository<GameEntity, Long> {
     @Query("SELECT g FROM GameEntity g order by g.createdAt desc")
     fun findAllAtGameList(): List<GameEntity>
 
+    fun findAllByGameStatus(status: GameStatus): List<GameEntity>
+
     @Query("SELECT g FROM GameEntity g where g.createdBy = :user")
     fun findAllByCreatedBy(user: UserEntity): List<GameEntity>
 
