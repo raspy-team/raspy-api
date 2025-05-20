@@ -196,7 +196,7 @@ class GameController(
     @PostMapping("/{id}/start")
     @Operation(summary = "Start Game", description = "경기 주최자가 해당 게임을 시작 상태로 변경합니다.")
     fun startGame(@PathVariable id: Long): ResponseEntity<Unit> {
-        val user = authService.getCurrentUser()
+        val user = authService.getCurrentUserEntity()
         gameService.startGame(id, user)
         return ResponseEntity.ok().build()
     }
