@@ -36,7 +36,7 @@ class GamePlayService(
             minorCategory = game.rule.minorCategory,
             ruleTitle = game.rule.ruleTitle,
             place = formatMatchLocation(game.placeRoad, game.placeDetail),
-            matchDate = game.matchDate!!,
+            matchDate = game.matchDate,
             user1 = user1.toSummary(),
             user2 = user2.toSummary(),
             // TODO: 통계구현 필요, ws 활용할거임.

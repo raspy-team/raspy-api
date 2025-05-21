@@ -8,7 +8,7 @@ data class GameDetailResponse(
     val minorCategory: String,
     val ruleTitle: String,
     val place: String,
-    val matchDate: LocalDateTime,
+    val matchDate: LocalDateTime?,
     val user1: UserSummary,
     val user2: UserSummary,
     val score1: Int,
