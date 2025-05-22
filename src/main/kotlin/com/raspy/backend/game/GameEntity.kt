@@ -45,6 +45,9 @@ class GameEntity(
 
     @Column(nullable = false)
     var gameStatus: GameStatus = GameStatus.MATCHING,
+
+    @Column(nullable = false)
+    var startedAt: LocalDateTime = LocalDateTime.now(),
 ) {
     /**
      * 현재 참가 중인 유저 목록 조회

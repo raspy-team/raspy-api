@@ -93,6 +93,7 @@ class GameService(
         val game = gameRepository.findById(id).orElseThrow { throw NoSuchElementException("게임이 존재하지 않음") }
         if (game.createdBy.id != user.id) throw IllegalAccessException("주최자만 경기를 시작할 수 있습니다.")
         game.gameStatus = GameStatus.IN_PROGRESS
+        game.startedAt = LocalDateTime.now()
 
         chatRoomRepository.save(
             ChatRoomEntity(

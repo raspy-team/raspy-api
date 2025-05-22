@@ -45,8 +45,11 @@ class GamePlayService(
             score1 = 5,
             score2 = 7,
             currentSet = 1,
+            pointsToWin = game.rule.pointsToWin,
+            setsToWin = game.rule.setsToWin,
+            winBy = game.rule.winBy,
             limitSeconds = game.rule.duration,
-            startedAt = LocalDateTime.now(),
+            startedAt = game.startedAt,
             // 게임이 존재한다면 채팅 방은 반드시 존재한다.
             chatRoomId = chatRoomRepository.findByGame(game)!!.id.toString(),
         )
