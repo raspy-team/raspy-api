@@ -64,12 +64,15 @@ class JwtChannelInterceptor {
                     val userMap = activeUsers.computeIfAbsent(roomId) { ConcurrentHashMap() }
 
                     chatService.notifyUserJoined(roomId, userEntity)
+                    try{
                     chatService.saveChatMessage(
                         roomId = roomId,
                         sender = userEntity,
                         content = "${userEntity.nickname}님이 입장하였습니다",
                         type = MessageType.ENTER
-                    )
+                    )} catch(e: Exception) {
+                        e.printStackTrace()
+                    }
 
                     /**
                      * 방 중복입장 방지

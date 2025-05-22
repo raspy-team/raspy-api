@@ -8,10 +8,7 @@ import com.raspy.backend.user.UserService
 import com.raspy.backend.web_socket.ChatMessage
 import io.swagger.v3.oas.annotations.Operation
 import mu.KotlinLogging
-import org.springframework.messaging.handler.annotation.DestinationVariable
-import org.springframework.messaging.handler.annotation.Header
-import org.springframework.messaging.handler.annotation.MessageMapping
-import org.springframework.messaging.handler.annotation.SendTo
+import org.springframework.messaging.handler.annotation.*
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
@@ -61,21 +58,73 @@ class GameWsController(
 
 
     @Operation(
-        summary = "점수 업데이트",
-        description = "유저가 지정한 방의 점수를 증가/감소시킵니다"
+        summary = "점수 및 게임 상태 이벤트 처리",
+        description = "점수 증감, 세트 변경, 경기 종료 등의 실시간 이벤트를 처리합니다."
     )
     @MessageMapping("/score/{roomId}")
-    @SendTo("/topic/ws/{roomId}")
-    fun handleScore(
+    fun handleGameEvent(
         @DestinationVariable roomId: String,
-        update: ScoreUpdate
-    ): ScoreUpdate {
-        logger.info { "Room[$roomId] ${update.userId} 점수변경: Δ=${update.delta}" }
+        update: ScoreUpdate,
+        @Header("simpSessionAttributes") sessionAttrs: Map<String, Any>
+    ) {
+        val userId = sessionAttrs["AUTHENTICATED_MEMBER_ID"] as? String
+            ?: throw AccessDeniedException("WebSocket 인증 실패: 세션에 유저 ID 없음")
 
-        /**
-         *  SCORING 저장 필요
-         */
+        val sender = userService.getUserEntity(userId)
 
-        return update
+        when (update.type) {
+            "SCORE" -> {
+                if (update.userId == null || update.delta == null)
+                    throw IllegalArgumentException("SCORE 이벤트에는 userId와 delta가 필요합니다.")
+
+                // 로그 저장
+                chatService.saveChatMessage(
+                    roomId = roomId,
+                    sender = sender,
+                    content = "[점수 변경] ${update.userId} → Δ${update.delta}",
+                    type = MessageType.TALK
+                )
+
+                // 클라이언트로 전파
+                messagingTemplate.convertAndSend(
+                    "/topic/ws/$roomId",
+                    mapOf(
+                        "type" to "SCORE",
+                        "userId" to update.userId,
+                        "delta" to update.delta
+                    )
+                )
+
+                logger.info { "Room[$roomId] 점수 변경: userId=${update.userId}, Δ=${update.delta}" }
+            }
+
+            "SET" -> {
+                if (update.set == null)
+                    throw IllegalArgumentException("SET 이벤트에는 set 필드가 필요합니다.")
+
+                messagingTemplate.convertAndSend(
+                    "/topic/ws/$roomId",
+                    mapOf(
+                        "type" to "SET",
+                        "set" to update.set + 1
+                    )
+                )
+
+                logger.info { "Room[$roomId] 세트 변경 → ${update.set + 1}" }
+            }
+
+            "FINISH" -> {
+                messagingTemplate.convertAndSend(
+                    "/topic/ws/$roomId",
+                    mapOf(
+                        "type" to "FINISH"
+                    )
+                )
+
+                logger.info { "Room[$roomId] 경기 종료 처리됨" }
+            }
+
+            else -> throw IllegalArgumentException("지원하지 않는 타입입니다: ${update.type}")
+        }
     }
 }

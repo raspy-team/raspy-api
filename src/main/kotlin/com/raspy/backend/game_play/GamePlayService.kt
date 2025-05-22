@@ -1,5 +1,6 @@
 package com.raspy.backend.game_play
 
+import com.raspy.backend.chat.ChatRoomRepository
 import com.raspy.backend.game.GameRepository
 import com.raspy.backend.game.enumerated.GameStatus
 import com.raspy.backend.game_play.request.ReviewRequest
@@ -21,6 +22,7 @@ class GamePlayService(
     private val userRepository: UserRepository,
     private val scoreLogRepository: ScoreLogRepository,
     private val reviewRepository: GameReviewRepository,
+    private val chatRoomRepository: ChatRoomRepository
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -44,8 +46,9 @@ class GamePlayService(
             score2 = 7,
             currentSet = 1,
             limitSeconds = game.rule.duration,
-            startedAt = LocalDateTime.now()
-            //**
+            startedAt = LocalDateTime.now(),
+            // 게임이 존재한다면 채팅 방은 반드시 존재한다.
+            chatRoomId = chatRoomRepository.findByGame(game)!!.id.toString(),
         )
     }
 

@@ -15,5 +15,6 @@ data class GameDetailResponse(
     val score2: Int,
     val currentSet: Int,
     val limitSeconds: Int,
-    val startedAt: LocalDateTime
+    val startedAt: LocalDateTime,
+    val chatRoomId: String // UUID 임.
 )
