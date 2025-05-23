@@ -44,6 +44,9 @@ class ChatService(
     }
 
 
+    /**
+     * Dm 관련 메시지 처리
+     */
     fun saveChatMessage(
         roomId: String,
         sender: UserEntity,
@@ -61,6 +64,32 @@ class ChatService(
         )
         chatMessageRepository.save(message)
         log.info { "Saved $type message from ${sender.id} in room $roomId" }
+        return message
+    }
+
+    /**
+     * 점수 관련 메시지 처리
+     */
+    fun saveChatMessage(
+        roomId: String,
+        sender: UserEntity,
+        scoreDelta: Int,
+        type: MessageType
+    ): ChatMessageEntity {
+        log.info { "Saving chat message start about scoring" }
+        val chatRoom = chatRoomRepository.getReferenceById(UUID.fromString(roomId))
+
+        /**
+         * TODO : 스코어 계산해서 다음 세트로 가야하는지, 말아야하는지 결정해야함.
+         */
+        val message = ChatMessageEntity(
+            chatRoom = chatRoom,
+            sender = sender,
+            scoreDelta = scoreDelta,
+            type = type
+        )
+        chatMessageRepository.save(message)
+        log.info { "Saved $type scoring message from ${sender.id} in room $roomId" }
         return message
     }
 

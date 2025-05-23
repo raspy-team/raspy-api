@@ -15,6 +15,7 @@ import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 class GamePlayService(
@@ -41,51 +42,55 @@ class GamePlayService(
             matchDate = game.matchDate,
             user1 = user1.toSummary(),
             user2 = user2.toSummary(),
-            // TODO: 통계구현 필요, ws 활용할거임.
-            score1 = 5,
-            score2 = 7,
-            currentSet = 1,
+
+            score1 = 5, // TODo
+            score2 = 7, // TODO
+            set1 = 0, // TODO
+            set2 = 0, // TODo
             pointsToWin = game.rule.pointsToWin,
             setsToWin = game.rule.setsToWin,
             winBy = game.rule.winBy,
             limitSeconds = game.rule.duration,
-            startedAt = game.startedAt,
+            gameStartedAt = game.startedAt,
+            currentSetStartedAt = game.startedAt, // TODO
             // 게임이 존재한다면 채팅 방은 반드시 존재한다.
             chatRoomId = chatRoomRepository.findByGame(game)!!.id.toString(),
         )
     }
 
-    fun logScore(gameId: Long, actor: UserEntity, req: ScoreLogRequest) {
-        val game = gameRepository.findByIdOrNull(gameId) ?: throw NoSuchElementException("게임 없음")
-        val target = userRepository.findByIdOrNull(req.targetId) ?: throw NoSuchElementException("유저 없음")
+//    fun logScore(gameId: Long, actor: UserEntity, req: ScoreLogRequest) {
+//        val game = gameRepository.findByIdOrNull(gameId) ?: throw NoSuchElementException("게임 없음")
+//        val target = userRepository.findByIdOrNull(req.targetId) ?: throw NoSuchElementException("유저 없음")
+//
+//        val delta = if (req.action == "INCREMENT") 1 else -1
+//        // TODO: 통계
+//     //   game.score[target.id] = (game.score[target.id] ?: 0) + delta
+//
+//        val logEntry = ScoreLogEntity(
+//            game = game,
+//            actor = actor,
+//            target = target,
+//            action = req.action,
+//            point = delta,
+//            // TODO: 통계
+//            setIndex = 1
+//        )
+//        scoreLogRepository.save(logEntry)
+//
+//        log.info { "점수 변경: game=$gameId, actor=${actor.id}, target=${target.id}, delta=$delta" }
+//    }
 
-        val delta = if (req.action == "INCREMENT") 1 else -1
-        // TODO: 통계
-     //   game.score[target.id] = (game.score[target.id] ?: 0) + delta
-
-        val logEntry = ScoreLogEntity(
-            game = game,
-            actor = actor,
-            target = target,
-            action = req.action,
-            point = delta,
-            // TODO: 통계
-            setIndex = 1
-        )
-        scoreLogRepository.save(logEntry)
-
-        log.info { "점수 변경: game=$gameId, actor=${actor.id}, target=${target.id}, delta=$delta" }
-    }
-
-    fun moveToNextSet(gameId: Long) {
-      //  val game = gameRepository.findByIdOrNull(gameId) ?: throw NoSuchElementException("게임 없음")
-      //  game.currentSet += 1
-      //  log.info { "다음 세트 이동: game=$gameId, set=${game.currentSet}" }
-    }
+//    fun moveToNextSet(gameId: Long) {
+//      //  val game = gameRepository.findByIdOrNull(gameId) ?: throw NoSuchElementException("게임 없음")
+//      //  game.currentSet += 1
+//      //  log.info { "다음 세트 이동: game=$gameId, set=${game.currentSet}" }
+//    }
 
     fun pauseGame(gameId: Long) {
+        /**
+         * TODO : 구현 예정
+         */
         log.info { "게임 일시 정지: game=$gameId" }
-        // 상태 저장이 필요하다면 game.pause() 등 추가 구현 가능
     }
 
     fun finishGame(gameId: Long) {
@@ -93,6 +98,11 @@ class GamePlayService(
         game.gameStatus = GameStatus.COMPLETED
     //    game.finishedAt = LocalDateTime.now()
         log.info { "게임 종료: game=$gameId" }
+    }
+
+    fun finishGame(roomId: UUID) {
+        val room  = chatRoomRepository.findById(roomId).orElseThrow {throw Exception("존재하지 않는 게임을 종료하려 함")}
+        finishGame(room.id)
     }
 
     fun getResult(id: Long): GameResultResponse {

@@ -1,9 +1,9 @@
 package com.raspy.backend.web_socket.GameWs
 
-import com.raspy.backend.auth.AuthService
 import com.raspy.backend.chat.ChatService
 import com.raspy.backend.chat.MessageType
-import com.raspy.backend.user.UserEntity
+import com.raspy.backend.game.GameService
+import com.raspy.backend.game_play.GamePlayService
 import com.raspy.backend.user.UserService
 import com.raspy.backend.web_socket.ChatMessage
 import io.swagger.v3.oas.annotations.Operation
@@ -12,12 +12,15 @@ import org.springframework.messaging.handler.annotation.*
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Controller
+import java.util.*
 
 @Controller
 class GameWsController(
     private val chatService: ChatService,
     private val userService: UserService,
     private val messagingTemplate: SimpMessagingTemplate,
+    private val gameService: GameService,
+    private val gamePlayService: GamePlayService,
 
     ) {
 
@@ -74,15 +77,17 @@ class GameWsController(
 
         when (update.type) {
             "SCORE" -> {
-                if (update.userId == null || update.delta == null)
+                /**
+                 * TODO: 스코어가 음수가 되는 경우
+                 */
+                if (update.userId == null || update.scoreDelta == null)
                     throw IllegalArgumentException("SCORE 이벤트에는 userId와 delta가 필요합니다.")
 
-                // 로그 저장
                 chatService.saveChatMessage(
                     roomId = roomId,
                     sender = sender,
-                    content = "[점수 변경] ${update.userId} → Δ${update.delta}",
-                    type = MessageType.TALK
+                    scoreDelta = update.scoreDelta,
+                    type = MessageType.SCORE
                 )
 
                 // 클라이언트로 전파
@@ -91,16 +96,23 @@ class GameWsController(
                     mapOf(
                         "type" to "SCORE",
                         "userId" to update.userId,
-                        "delta" to update.delta
+                        "delta" to update.scoreDelta
                     )
                 )
 
-                logger.info { "Room[$roomId] 점수 변경: userId=${update.userId}, Δ=${update.delta}" }
+                logger.info { "Room[$roomId] 점수 변경: userId=${update.userId}, Δ=${update.scoreDelta}" }
             }
 
             "SET" -> {
                 if (update.set == null)
                     throw IllegalArgumentException("SET 이벤트에는 set 필드가 필요합니다.")
+
+                chatService.saveChatMessage(
+                    roomId = roomId,
+                    sender = sender,
+                    content = (update.set + 1) as String,
+                    type = MessageType.SET
+                )
 
                 messagingTemplate.convertAndSend(
                     "/topic/ws/$roomId",
@@ -114,6 +126,8 @@ class GameWsController(
             }
 
             "FINISH" -> {
+                gamePlayService.finishGame(UUID.fromString(roomId));
+
                 messagingTemplate.convertAndSend(
                     "/topic/ws/$roomId",
                     mapOf(

@@ -19,8 +19,16 @@ data class ChatMessageEntity(
     @JoinColumn(name = "sender_id", nullable = false)
     val sender: UserEntity,
 
-    @Column(nullable = false, length = 1000)
-    val message: String,
+    @Column(nullable = true, length = 1000)
+    val message: String? = null,
+
+
+    //  type이 score일 때
+    @Column(nullable = true)
+    val scoreDelta: Int? = null,
+
+    @Column(nullable = true)
+    val set: Int? = null,
 
     @Column(nullable = false)
     val sentAt: LocalDateTime = LocalDateTime.now(),
