@@ -28,7 +28,7 @@ data class ChatMessageEntity(
     val scoreDelta: Int? = null,
 
     @Column(nullable = true)
-    val set: Int? = null,
+    val scoreSet: Int? = null,
 
     @Column(nullable = false)
     val sentAt: LocalDateTime = LocalDateTime.now(),

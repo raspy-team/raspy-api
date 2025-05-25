@@ -102,7 +102,7 @@ class GamePlayService(
 
     fun finishGame(roomId: UUID) {
         val room  = chatRoomRepository.findById(roomId).orElseThrow {throw Exception("존재하지 않는 게임을 종료하려 함")}
-        finishGame(room.id)
+        finishGame(room.game!!.id)
     }
 
     fun getResult(id: Long): GameResultResponse {

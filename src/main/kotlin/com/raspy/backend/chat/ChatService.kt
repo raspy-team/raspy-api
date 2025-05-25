@@ -81,7 +81,14 @@ class ChatService(
 
         /**
          * TODO : 스코어 계산해서 다음 세트로 가야하는지, 말아야하는지 결정해야함.
+         *  단, 세트 이동 여부는 프론트에서도 계산 로직이 있기에 전달하지 않아도 됨.
+         *  TODO : set 시작 시간 기록해야함, 프론트엔드에서도 세트 계산 로직에 시간 초기화 기능 필요함.
          */
+
+//        val scorePerSet = chatRoom.game!!.rule.pointsToWin
+//
+//        if(chatRoom.game.)
+
         val message = ChatMessageEntity(
             chatRoom = chatRoom,
             sender = sender,
