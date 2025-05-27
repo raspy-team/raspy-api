@@ -80,8 +80,6 @@ class GameWsController(
                 /**
                  * TODO: 스코어가 음수가 되는 경우
                  */
-                if (update.userId == null || update.scoreDelta == null)
-                    throw IllegalArgumentException("SCORE 이벤트에는 userId와 delta가 필요합니다.")
 
                 chatService.saveScoreLog(
                     update,
