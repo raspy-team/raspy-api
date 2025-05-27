@@ -6,5 +6,7 @@ interface SetLogRepository: JpaRepository<SetLogEntity, Long> {
     fun findByGameIdOrderByStartedAtDesc(gameId: Long): SetLogEntity
     fun findAllByGameId(gameId: Long): List<SetLogEntity>
 
+    fun deleteAllByGameId(gameId: Long)
+
 
 }

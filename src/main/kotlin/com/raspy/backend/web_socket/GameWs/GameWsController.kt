@@ -134,6 +134,10 @@ class GameWsController(
                 logger.info { "Room[$roomId] 경기 종료 처리됨" }
             }
 
+            "RESET" -> {
+                gamePlayService.resetGame(roomId)
+            }
+
             else -> throw IllegalArgumentException("지원하지 않는 타입입니다: ${update.type}")
         }
     }

@@ -9,6 +9,7 @@ import com.raspy.backend.game_play.response.GameResultResponse
 import com.raspy.backend.game_play.response.ScoreSummary
 import com.raspy.backend.game_play.response.UserSummary
 import com.raspy.backend.user.UserEntity
+import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -132,6 +133,25 @@ class GamePlayService(
     fun finishGame(roomId: UUID) {
         val room  = chatRoomRepository.findById(roomId).orElseThrow {throw Exception("존재하지 않는 게임을 종료하려 함")}
         finishGame(room.game!!.id)
+    }
+
+    /**
+     * 게임이 취소 되는 것이 아니라, 게임 진행 상태는 유지된 채로 기록만 초기화하는 것임.
+     */
+    @Transactional
+    fun resetGame(roomId: String) {
+        val room  = chatRoomRepository.findById(UUID.fromString(roomId)).orElseThrow {throw Exception("존재하지 않는 게임을 리셋하려 함")}
+        room.game!!.startedAt = LocalDateTime.now()
+
+        scoreLogRepository.deleteAllByGameId(room.game.id)
+        setLogRepository.deleteAllByGameId(room.game.id)
+
+        setLogRepository.save(
+            SetLogEntity(
+                game = room.game,
+                actor = room.game.createdBy,
+                totalSetIndex = 1
+            ))
     }
 
     fun getResult(id: Long): GameResultResponse {
