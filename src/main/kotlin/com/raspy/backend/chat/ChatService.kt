@@ -1,19 +1,25 @@
 package com.raspy.backend.chat
 
-import com.raspy.backend.jwt.UserPrincipal
+import com.raspy.backend.game_play.ScoreLogEntity
+import com.raspy.backend.game_play.ScoreLogRepository
+import com.raspy.backend.game_play.SetLogEntity
+import com.raspy.backend.game_play.SetLogRepository
 import com.raspy.backend.user.UserEntity
+import com.raspy.backend.user.UserRepository
+import com.raspy.backend.web_socket.GameWs.ScoreUpdate
 import mu.KotlinLogging
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
-import java.security.Principal
-import java.time.LocalDateTime
 import java.util.*
 
 @Service
 class ChatService(
     private val messagingTemplate: SimpMessagingTemplate,
     private val chatRoomRepository: ChatRoomRepository,
-    private val chatMessageRepository: ChatMessageRepository
+    private val chatMessageRepository: ChatMessageRepository,
+    private val userRepository: UserRepository,
+    private val scoreLogRepository: ScoreLogRepository,
+    private val setLogRepository: SetLogRepository
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -70,36 +76,42 @@ class ChatService(
     /**
      * 점수 관련 메시지 처리
      */
-    fun saveChatMessage(
+    fun saveScoreLog(
+        update: ScoreUpdate,
         roomId: String,
-        sender: UserEntity,
-        scoreDelta: Int,
-        type: MessageType
-    ): ChatMessageEntity {
+        actor: UserEntity,
+    ): ScoreLogEntity {
         log.info { "Saving chat message start about scoring" }
         val chatRoom = chatRoomRepository.getReferenceById(UUID.fromString(roomId))
 
-        /**
-         * TODO : 스코어 계산해서 다음 세트로 가야하는지, 말아야하는지 결정해야함.
-         *  단, 세트 이동 여부는 프론트에서도 계산 로직이 있기에 전달하지 않아도 됨.
-         *  TODO : set 시작 시간 기록해야함, 프론트엔드에서도 세트 계산 로직에 시간 초기화 기능 필요함.
-         */
-
-//        val scorePerSet = chatRoom.game!!.rule.pointsToWin
-//
-//        if(chatRoom.game.)
-
-        val message = ChatMessageEntity(
-            chatRoom = chatRoom,
-            sender = sender,
-            scoreDelta = scoreDelta,
-            type = type
+        val scoreLog = ScoreLogEntity(
+            game = chatRoom.game!!,
+            actor = actor,
+            target = userRepository.findById(update.userId).orElseThrow { throw RuntimeException("not exist target user") },
+            scoreDelta = update.scoreDelta,
+            setIndex = update.setIndex,
         )
-        chatMessageRepository.save(message)
-        log.info { "Saved $type scoring message from ${sender.id} in room $roomId" }
-        return message
+        scoreLogRepository.save(scoreLog)
+
+        log.info { "Saved ${update.type} scoring message in room $roomId" }
+        return scoreLog
     }
 
+
+    fun saveStartSetLog(
+        newSet: Int,
+        roomId: String,
+        actor: UserEntity
+    ): SetLogEntity{
+        log.info { "Saving chat message start about set" }
+        val chatRoom = chatRoomRepository.getReferenceById(UUID.fromString(roomId))
+
+        return setLogRepository.save(SetLogEntity(
+            game = chatRoom.game!!,
+            actor = actor,
+            totalSetIndex = newSet,
+        ))
+    }
 
 
 }

@@ -4,13 +4,11 @@ import com.raspy.backend.chat.ChatRoomRepository
 import com.raspy.backend.game.GameRepository
 import com.raspy.backend.game.enumerated.GameStatus
 import com.raspy.backend.game_play.request.ReviewRequest
-import com.raspy.backend.game_play.request.ScoreLogRequest
 import com.raspy.backend.game_play.response.GameDetailResponse
 import com.raspy.backend.game_play.response.GameResultResponse
 import com.raspy.backend.game_play.response.ScoreSummary
 import com.raspy.backend.game_play.response.UserSummary
 import com.raspy.backend.user.UserEntity
-import com.raspy.backend.user.UserRepository
 import mu.KotlinLogging
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -20,10 +18,10 @@ import java.util.UUID
 @Service
 class GamePlayService(
     private val gameRepository: GameRepository,
-    private val userRepository: UserRepository,
-    private val scoreLogRepository: ScoreLogRepository,
     private val reviewRepository: GameReviewRepository,
-    private val chatRoomRepository: ChatRoomRepository
+    private val chatRoomRepository: ChatRoomRepository,
+    private val setLogRepository: SetLogRepository,
+    private val scoreLogRepository: ScoreLogRepository
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -32,6 +30,34 @@ class GamePlayService(
 
         val users = game.participations.map { it.user }
         val (user1, user2) = users
+
+        val latestSetLog: SetLogEntity = setLogRepository.findByGameIdOrderByStartedAtDesc(game.id)
+        val currentSet = latestSetLog.totalSetIndex // 현재 진행 중인 세트 정보임
+        /**
+         * 현재 게임에서 각 유저가 획득한 세트, 스코어 연산
+         */
+
+        val scoreLogs: List<ScoreLogEntity> = scoreLogRepository.findAllByGame(game)
+        val scoreLogsOfCurrentSet: List<ScoreLogEntity> =
+            scoreLogs.filter{
+                it.setIndex == currentSet
+            }
+
+        var user1Set = 0;
+        var user2Set = 0;
+
+        for(i in (1..currentSet-1)) {
+            val set = scoreLogs.filter {
+                it.setIndex == i
+            }
+
+            if(set.count{it.target == user1} > set.count{it.target == user2}) {
+                user1Set += 1
+            } else user2Set += 1
+        }
+
+        val user1Score = scoreLogsOfCurrentSet.count { it.target == user1 }
+        val user2Score = scoreLogsOfCurrentSet.count { it.target == user2 }
 
         return GameDetailResponse(
             id = game.id,
@@ -43,16 +69,19 @@ class GamePlayService(
             user1 = user1.toSummary(),
             user2 = user2.toSummary(),
 
-            score1 = 5, // TODo
-            score2 = 7, // TODO
-            set1 = 0, // TODO
-            set2 = 0, // TODo
+            score1 = user1Score,
+            score2 = user2Score,
+            set1 = user1Set,
+            set2 = user2Set,
             pointsToWin = game.rule.pointsToWin,
             setsToWin = game.rule.setsToWin,
             winBy = game.rule.winBy,
             limitSeconds = game.rule.duration,
-            gameStartedAt = game.startedAt,
-            currentSetStartedAt = game.startedAt, // TODO
+
+            // 현재 세트가 시작된 시각을 의미함.
+            setStartedAt = latestSetLog.startedAt,
+
+            totalGameStartedAt = game.startedAt,
             // 게임이 존재한다면 채팅 방은 반드시 존재한다.
             chatRoomId = chatRoomRepository.findByGame(game)!!.id.toString(),
         )
@@ -127,6 +156,7 @@ class GamePlayService(
             matchDate = game.matchDate ?: LocalDateTime.now()
         )
     }
+
 
     fun submitReview(gameId: Long, req: ReviewRequest) {
         val game = gameRepository.findByIdOrNull(gameId) ?: throw NoSuchElementException("게임 없음")

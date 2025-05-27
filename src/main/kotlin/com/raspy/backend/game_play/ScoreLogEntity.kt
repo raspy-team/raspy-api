@@ -19,10 +19,7 @@ data class ScoreLogEntity(
     @ManyToOne @JoinColumn(name = "target_id")
     val target: UserEntity,
 
-    @Column(nullable = false)
-    val action: String,  // "INCREMENT" or "DECREMENT"
-
-    val point: Int = 1,
+    val scoreDelta: Int = 1,
     val setIndex: Int,
     val timestamp: LocalDateTime = LocalDateTime.now()
 )

@@ -1,11 +1,7 @@
 package com.raspy.backend.game_play
 
 import com.raspy.backend.auth.AuthService
-import com.raspy.backend.game.GameService
-import com.raspy.backend.game_play.request.ReviewRequest
-import com.raspy.backend.game_play.request.ScoreLogRequest
 import com.raspy.backend.game_play.response.GameDetailResponse
-import com.raspy.backend.game_play.response.GameResultResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 

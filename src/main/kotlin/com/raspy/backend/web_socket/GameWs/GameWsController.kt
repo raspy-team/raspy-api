@@ -73,7 +73,7 @@ class GameWsController(
         val userId = sessionAttrs["AUTHENTICATED_MEMBER_ID"] as? String
             ?: throw AccessDeniedException("WebSocket 인증 실패: 세션에 유저 ID 없음")
 
-        val sender = userService.getUserEntity(userId)
+        val actor = userService.getUserEntity(userId)
 
         when (update.type) {
             "SCORE" -> {
@@ -83,11 +83,10 @@ class GameWsController(
                 if (update.userId == null || update.scoreDelta == null)
                     throw IllegalArgumentException("SCORE 이벤트에는 userId와 delta가 필요합니다.")
 
-                chatService.saveChatMessage(
-                    roomId = roomId,
-                    sender = sender,
-                    scoreDelta = update.scoreDelta,
-                    type = MessageType.SCORE
+                chatService.saveScoreLog(
+                    update,
+                    roomId,
+                    actor
                 )
 
                 // 클라이언트로 전파
@@ -104,25 +103,22 @@ class GameWsController(
             }
 
             "SET" -> {
-                if (update.set == null)
-                    throw IllegalArgumentException("SET 이벤트에는 set 필드가 필요합니다.")
-
-                chatService.saveChatMessage(
-                    roomId = roomId,
-                    sender = sender,
-                    content = (update.set + 1) as String,
-                    type = MessageType.SET
+                chatService.saveStartSetLog(
+                    update.setIndex,
+                    roomId,
+                    actor
                 )
+
 
                 messagingTemplate.convertAndSend(
                     "/topic/ws/$roomId",
                     mapOf(
                         "type" to "SET",
-                        "set" to update.set + 1
+                        // "set" to update.set + 1
                     )
                 )
 
-                logger.info { "Room[$roomId] 세트 변경 → ${update.set + 1}" }
+                logger.info { "Room[$roomId] 세트 변경 → ${update.setIndex}" }
             }
 
             "FINISH" -> {

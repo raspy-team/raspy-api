@@ -14,7 +14,10 @@ data class GameDetailResponse(
      * match date와 실제 시작 시간은 다를 수 있음.
      */
     val matchDate: LocalDateTime?,
-    val gameStartedAt: LocalDateTime? = null,
+
+    val totalGameStartedAt: LocalDateTime? = null,
+    // set started at
+    val setStartedAt: LocalDateTime? = null,
 
     val user1: UserSummary,
     val user2: UserSummary,
@@ -30,8 +33,6 @@ data class GameDetailResponse(
     val winBy: WinCondition,
 
     val limitSeconds: Int,
-
-    val currentSetStartedAt: LocalDateTime? = null,
 
     val chatRoomId: String // UUID 임.
 

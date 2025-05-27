@@ -9,12 +9,13 @@ import com.raspy.backend.game.enumerated.ParticipationStatus
 import com.raspy.backend.game.enumerated.WinCondition
 import com.raspy.backend.game.request.CreateGameRequest
 import com.raspy.backend.game.response.*
+import com.raspy.backend.game_play.SetLogEntity
+import com.raspy.backend.game_play.SetLogRepository
 import com.raspy.backend.rule.RuleDto
 import com.raspy.backend.rule.RuleEntity
 import com.raspy.backend.rule.RuleRepository
 import com.raspy.backend.user.UserEntity
 import com.raspy.backend.user.UserRepository
-import com.raspy.backend.user.UserService
 import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -28,6 +29,7 @@ class GameService(
     private val chatRoomRepository: ChatRoomRepository,
     private val participationRepository: ParticipationRepository,
     private val ruleRepository: RuleRepository,
+    private val setLogRepository: SetLogRepository,
 
     ) {
     private val log = KotlinLogging.logger {}
@@ -99,6 +101,14 @@ class GameService(
             ChatRoomEntity(
                 type = ChatRoomType.GAME,
                 game = game,
+            )
+        )
+
+        setLogRepository.save(
+            SetLogEntity(
+                game = game,
+                actor = user,
+                totalSetIndex = 1
             )
         )
 
